@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-
-	"io/ioutil"
 
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/pkg/errors"
@@ -74,10 +73,7 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, errors.Wrap(err, "oauth2 token exchange failed"))
 		return
 	}
-	fmt.Printf("%v\n", tok)
-
-	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext,
-		cfg.TokenSource(oauth2.NoContext, tok)))
+	svc, err := plus.New(cfg.Client(oauth2.NoContext, tok))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, errors.Wrap(err, "failed to construct g+ client"))
