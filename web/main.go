@@ -8,6 +8,7 @@ import (
 
 	"io/ioutil"
 
+	plus "github.com/google/google-api-go-client/plus/v1"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -39,14 +40,14 @@ func main() {
 	mux.HandleFunc("/oauth2callback", oauth2Callback)
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000",
-		Handler: mux}
+		Handler: mux,
+	}
 	log.Printf("listening at %s", srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
 	url := cfg.AuthCodeURL("todo_rand_state",
-		// oauth2.SetAuthURLParam("redirect_uri", google.RedirectURL),
 		oauth2.SetAuthURLParam("access_type", "offline"),
 		oauth2.SetAuthURLParam("scope", "profile"))
 	w.Header().Set("Location", url)
@@ -61,9 +62,21 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code") // TODO check
 	fmt.Println(code)
 
-	tok, err := cfg.Exchange(nil, code)
+	tok, err := cfg.Exchange(oauth2.NoContext, code)
 	if err != nil {
 		log.Fatal(err) // TODO fix
 	}
 	fmt.Printf("%v\n", tok)
+
+	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext,
+		cfg.TokenSource(oauth2.NoContext, tok)))
+	if err != nil {
+		log.Fatal(err) // TODO fix
+	}
+	me, err := plus.NewPeopleService(svc).Get("me").Do()
+	if err != nil {
+		log.Fatal(err) // TODO fix
+	}
+	log.Println(me.Id)
+	log.Println(me.DisplayName)
 }
