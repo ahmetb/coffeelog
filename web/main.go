@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 
 	plus "github.com/google/google-api-go-client/plus/v1"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -19,15 +20,15 @@ func main() {
 	// read oauth2 config
 	env := "GOOGLE_OAUTH2_CONFIG"
 	if os.Getenv(env) == "" {
-		panic(env + " is not set") // TODO fix
+		panic(errors.New(env + " is not set"))
 	}
 	b, err := ioutil.ReadFile(os.Getenv(env))
 	if err != nil {
-		panic(err) // TODO fix
+		panic(errors.Wrap(err, "failed to parse config file"))
 	}
 	authConf, err := google.ConfigFromJSON(b)
 	if err != nil {
-		panic(err) // TODO fix
+		panic(errors.Wrap(err, "failed to parse config file"))
 	}
 	cfg = authConf
 
@@ -43,7 +44,7 @@ func main() {
 		Handler: mux,
 	}
 	log.Printf("listening at %s", srv.Addr)
-	log.Fatal(srv.ListenAndServe())
+	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -56,27 +57,38 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	if state := r.URL.Query().Get("state"); state != "todo_rand_state" {
-		log.Fatal("wrong state") // TODO fix
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "wrong state")
 	}
 
-	code := r.URL.Query().Get("code") // TODO check
-	fmt.Println(code)
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "missing oauth2 grant code")
+		return
+	}
 
 	tok, err := cfg.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		log.Fatal(err) // TODO fix
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, errors.Wrap(err, "oauth2 token exchange failed"))
+		return
 	}
 	fmt.Printf("%v\n", tok)
 
 	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext,
 		cfg.TokenSource(oauth2.NoContext, tok)))
 	if err != nil {
-		log.Fatal(err) // TODO fix
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, errors.Wrap(err, "failed to construct g+ client"))
+		return
 	}
 	me, err := plus.NewPeopleService(svc).Get("me").Do()
 	if err != nil {
-		log.Fatal(err) // TODO fix
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, errors.Wrap(err, "failed to query user g+ profile"))
+		return
 	}
-	log.Println(me.Id)
-	log.Println(me.DisplayName)
+	log.Printf("Logged in user id: %s", me.Id)
+	fmt.Fprintf(w, "Hello "+me.DisplayName)
 }
