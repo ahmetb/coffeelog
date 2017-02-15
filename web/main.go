@@ -9,6 +9,7 @@ import (
 	"time"
 
 	plus "github.com/google/google-api-go-client/plus/v1"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -41,14 +42,15 @@ func main() {
 	cfg = authConf
 
 	// set up server
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/login", login)
-	mux.HandleFunc("/logout", logout)
-	mux.HandleFunc("/oauth2callback", oauth2Callback)
+	r := mux.NewRouter()
+	r.HandleFunc("/", home).Methods(http.MethodGet)
+	r.HandleFunc("/login", login).Methods(http.MethodGet)
+	r.HandleFunc("/logout", logout).Methods(http.MethodGet)
+	r.HandleFunc("/oauth2callback", oauth2Callback).Methods(http.MethodGet)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000",
-		Handler: mux,
+		Handler: r,
 	}
 	log.Printf("listening at %s", srv.Addr)
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
