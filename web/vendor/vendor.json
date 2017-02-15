@@ -45,6 +45,12 @@
 			"revisionTime": "2016-11-07T00:24:06Z"
 		},
 		{
+			"checksumSHA1": "veX5bpYOBjZZWMyWxXxys8EH9d8=",
+			"path": "github.com/gorilla/securecookie",
+			"revision": "fa5329f913702981df43dcb2a380bac429c810b5",
+			"revisionTime": "2016-10-03T05:16:01Z"
+		},
+		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",
 			"path": "github.com/pkg/errors",
 			"revision": "248dadf4e9068a0b3e79f02ed0a610d935de5302",
