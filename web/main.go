@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/securecookie"
@@ -41,10 +42,9 @@ func main() {
 
 	// set up server
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "We log coffee!")
-	})
+	mux.HandleFunc("/", home)
 	mux.HandleFunc("/login", login)
+	mux.HandleFunc("/logout", logout)
 	mux.HandleFunc("/oauth2callback", oauth2Callback)
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000",
@@ -54,11 +54,49 @@ func main() {
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 
+func home(w http.ResponseWriter, r *http.Request) {
+
+	c, err := r.Cookie("oauth2_token")
+	if err == http.ErrNoCookie {
+		fmt.Fprint(w, "We log coffee!")
+		return
+	}
+
+	var token *oauth2.Token
+	if err := sc.Decode("oauth2_token", c.Value, &token); err != nil {
+		badRequest(w, errors.Wrap(err, "failed to decode cookie"))
+		return
+	}
+
+	tokenSource := cfg.TokenSource(oauth2.NoContext, token)
+	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, tokenSource))
+	if err != nil {
+		badRequest(w, errors.Wrap(err, "failed to construct g+ client"))
+		return
+	}
+	me, err := plus.NewPeopleService(svc).Get("me").Do()
+	if err != nil {
+		badRequest(w, errors.Wrap(err, "failed to query user g+ profile"))
+		return
+	}
+	fmt.Fprint(w, "Home page for "+me.DisplayName)
+}
+
 func login(w http.ResponseWriter, r *http.Request) {
 	url := cfg.AuthCodeURL("todo_rand_state",
 		oauth2.SetAuthURLParam("access_type", "offline"),
 		oauth2.SetAuthURLParam("scope", "profile"))
 	w.Header().Set("Location", url)
+	w.WriteHeader(http.StatusFound)
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	for _, c := range r.Cookies() {
+		log.Printf("clearing cookie: %q", c.Name)
+		c.Expires = time.Unix(1, 0)
+		http.SetCookie(w, c)
+	}
+	w.Header().Set("Location", "/")
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -104,16 +142,15 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO save cookies
 	http.SetCookie(w, &http.Cookie{
 		Name:  "oauth2_token",
 		Path:  "/",
 		Value: tokEncoded,
 	})
 
-	log.Printf("Logged in user id: %s", me.Id)
-	fmt.Fprintf(w, "Hello "+me.DisplayName+" ("+fmt.Sprintf("%v", me.IsPlusUser)+")")
-	// TODO redirect to somewhere meaningful
+	log.Printf("Authenticated as user id: %s", me.Id)
+	w.Header().Set("Location", "/")
+	w.WriteHeader(http.StatusFound)
 }
 
 func badRequest(w http.ResponseWriter, err error) {
