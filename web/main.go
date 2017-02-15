@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	plus "github.com/google/google-api-go-client/plus/v1"
@@ -57,31 +59,45 @@ func main() {
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
+	type user struct {
+		Name    string
+		ID      string
+		Picture string
+	}
+
+	var userData *user
 
 	c, err := r.Cookie("oauth2_token")
-	if err == http.ErrNoCookie {
-		fmt.Fprint(w, "We log coffee!")
-		return
+	if err != http.ErrNoCookie {
+		var token *oauth2.Token
+		if err := sc.Decode("oauth2_token", c.Value, &token); err != nil {
+			badRequest(w, errors.Wrap(err, "failed to decode cookie"))
+			return
+		}
+
+		tokenSource := cfg.TokenSource(oauth2.NoContext, token)
+		svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, tokenSource))
+		if err != nil {
+			badRequest(w, errors.Wrap(err, "failed to construct g+ client"))
+			return
+		}
+		me, err := plus.NewPeopleService(svc).Get("me").Do()
+		if err != nil {
+			badRequest(w, errors.Wrap(err, "failed to query user g+ profile"))
+			return
+		}
+		userData = &user{ID: me.Id,
+			Name:    me.DisplayName,
+			Picture: me.Image.Url}
 	}
 
-	var token *oauth2.Token
-	if err := sc.Decode("oauth2_token", c.Value, &token); err != nil {
-		badRequest(w, errors.Wrap(err, "failed to decode cookie"))
-		return
-	}
+	tmpl := template.Must(template.ParseFiles(
+		filepath.Join("static", "template", "layout.html"),
+		filepath.Join("static", "template", "home.html")))
 
-	tokenSource := cfg.TokenSource(oauth2.NoContext, token)
-	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, tokenSource))
-	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to construct g+ client"))
-		return
+	if err := tmpl.Execute(w, map[string]interface{}{"user": userData}); err != nil {
+		log.Fatal(err)
 	}
-	me, err := plus.NewPeopleService(svc).Get("me").Do()
-	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to query user g+ profile"))
-		return
-	}
-	fmt.Fprint(w, "Home page for "+me.DisplayName)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
