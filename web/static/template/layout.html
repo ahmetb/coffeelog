@@ -8,17 +8,15 @@
   <link type="text/css" rel="stylesheet" href="/static/css/materialize.min.css" media="screen,projection">
 </head>
 <body>
-  <!--Import jQuery before materialize.js-->
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
   <script type="text/javascript" src="js/materialize.min.js"></script>
-
   <nav>
     <div class="nav-wrapper">
       <a href="#" class="brand-logo">Coffee Log</a>
-      <ul id="nav-mobile" class="right hide-on-med-and-down valign-wrapper">
+      <ul class="right hide-on-med-and-down valign-wrapper">
         {{if .user}}
           <li><a href="/logout">Logout</a></li>
-          <li><div class="valign-wrapper"><img src="{{.user.Picture}}" alt="" class="circle responsive-img"/></div></li>
+          <li><a href="#"><div class="valign-wrapper"><img src="{{.user.Picture}}" alt="" class="circle responsive-img"/></div></a></li>
         {{else}}
           <li><a href="/login">Login</a></li>
         {{end}}

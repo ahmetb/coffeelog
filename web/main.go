@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -26,6 +26,8 @@ var (
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+	log.Info("web frontend")
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
 	// read oauth2 config
@@ -45,17 +47,34 @@ func main() {
 
 	// set up server
 	r := mux.NewRouter()
-	r.HandleFunc("/", home).Methods(http.MethodGet)
-	r.HandleFunc("/login", login).Methods(http.MethodGet)
-	r.HandleFunc("/logout", logout).Methods(http.MethodGet)
-	r.HandleFunc("/oauth2callback", oauth2Callback).Methods(http.MethodGet)
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	r.HandleFunc("/", logHandler(home)).Methods(http.MethodGet)
+	r.HandleFunc("/login", logHandler(login)).Methods(http.MethodGet)
+	r.HandleFunc("/logout", logHandler(logout)).Methods(http.MethodGet)
+	r.HandleFunc("/oauth2callback", logHandler(oauth2Callback)).Methods(http.MethodGet)
+	r.PathPrefix("/static/").Handler(logHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP))
 	srv := http.Server{
-		Addr:    "127.0.0.1:8000",
+		Addr:    "127.0.0.1:8000", // TODO make configurable
 		Handler: r,
 	}
-	log.Printf("listening at %s", srv.Addr)
+	log.WithField("addr", srv.Addr).Info("starting to listen")
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
+}
+
+func logHandler(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		e := log.WithFields(log.Fields{
+			"method": r.Method,
+			"path":   r.URL.Path,
+		})
+		e.Debug("request accepted")
+		start := time.Now()
+		defer func() {
+			e.WithFields(log.Fields{
+				"elapsed": time.Now().Sub(start),
+			}).Debug("request completed")
+		}()
+		h(w, r)
+	}
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +88,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 	c, err := r.Cookie("oauth2_token")
 	if err != http.ErrNoCookie {
+		log.Debug("auth cookie found")
 		var token *oauth2.Token
 		if err := sc.Decode("oauth2_token", c.Value, &token); err != nil {
 			badRequest(w, errors.Wrap(err, "failed to decode cookie"))
@@ -89,6 +109,8 @@ func home(w http.ResponseWriter, r *http.Request) {
 		userData = &user{ID: me.Id,
 			Name:    me.DisplayName,
 			Picture: me.Image.Url}
+	} else {
+		log.Debug("auth cookie not found")
 	}
 
 	tmpl := template.Must(template.ParseFiles(
@@ -104,15 +126,17 @@ func login(w http.ResponseWriter, r *http.Request) {
 	url := cfg.AuthCodeURL("todo_rand_state",
 		oauth2.SetAuthURLParam("access_type", "offline"),
 		oauth2.SetAuthURLParam("scope", "profile"))
+	log.Debug("redirecting user to oauth2 consent page")
 	w.Header().Set("Location", url)
 	w.WriteHeader(http.StatusFound)
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
+	log.Debug("logout requested")
 	for _, c := range r.Cookies() {
-		log.Printf("clearing cookie: %q", c.Name)
 		c.Expires = time.Unix(1, 0)
 		http.SetCookie(w, c)
+		log.WithField("key", c.Name).Debug("cleared cookie")
 	}
 	w.Header().Set("Location", "/")
 	w.WriteHeader(http.StatusFound)
@@ -166,12 +190,13 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		Value: tokEncoded,
 	})
 
-	log.Printf("Authenticated as user id: %s", me.Id)
+	log.WithField("user.id", me.Id).Info("authenticated user")
 	w.Header().Set("Location", "/")
 	w.WriteHeader(http.StatusFound)
 }
 
 func badRequest(w http.ResponseWriter, err error) {
+	log.WithField("http.status", http.StatusBadRequest).WithField("error", err).Warn("request failed")
 	w.WriteHeader(http.StatusBadRequest)
 	fmt.Fprint(w, errors.Wrap(err, "bad request"))
 }
