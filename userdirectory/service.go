@@ -13,11 +13,9 @@ import (
 	"golang.org/x/net/context"
 )
 
-const (
-	projectID = "ahmetb-starter" // TODO configurable
-)
-
-type userDirectory struct{}
+type userDirectory struct {
+	ds *datastore.Client
+}
 
 type account struct {
 	K           *datastore.Key `datastore:"__key__"`
@@ -33,16 +31,9 @@ func (u *userDirectory) AuthorizeGoogle(ctx context.Context, goog *pb.GoogleUser
 		"google.id": goog.GetID()})
 	log.Debug("received request")
 
-	ds, err := datastore.NewClient(ctx, projectID)
-	if err != nil {
-		log.WithField("error", err).Fatal("failed to create client")
-		return nil, errors.New("failed to initialize database client")
-	}
-	defer ds.Close()
-
 	q := datastore.NewQuery("Account").Filter("GoogleID =", goog.ID).Limit(1)
 	var v []account
-	if _, err := ds.GetAll(ctx, q, &v); err != nil {
+	if _, err := u.ds.GetAll(ctx, q, &v); err != nil {
 		log.WithField("error", err).Error("failed to query the datastore")
 		return nil, errors.New("failed to query")
 	}
@@ -50,7 +41,7 @@ func (u *userDirectory) AuthorizeGoogle(ctx context.Context, goog *pb.GoogleUser
 	var id string
 	if len(v) == 0 {
 		// create new account
-		k, err := ds.Put(ctx, datastore.IncompleteKey("Account", nil), &account{
+		k, err := u.ds.Put(ctx, datastore.IncompleteKey("Account", nil), &account{
 			Email:       goog.Email,
 			DisplayName: goog.DisplayName,
 			Picture:     goog.PictureURL,
@@ -88,21 +79,13 @@ func (u *userDirectory) GetUser(ctx context.Context, req *pb.UserRequest) (*pb.U
 	}()
 	log.Debug("received request")
 
-	// TODO this block is highly duplicated, eliminate
-	ds, err := datastore.NewClient(ctx, projectID)
-	if err != nil {
-		log.WithField("error", err).Fatal("failed to create client")
-		return nil, errors.New("failed to initialize database client")
-	}
-	defer ds.Close()
-
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		return nil, errors.New("cannot parse ID")
 	}
 
 	var v account
-	err = ds.Get(ctx, datastore.IDKey("Account", id, nil), &v)
+	err = u.ds.Get(ctx, datastore.IDKey("Account", id, nil), &v)
 	if err == datastore.ErrNoSuchEntity {
 		log.Debug("user not found")
 		return &pb.UserResponse{Found: false}, nil

@@ -123,9 +123,9 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	cfg.Scopes = []string{"profile", "email"}
 	url := cfg.AuthCodeURL("todo_rand_state",
-		oauth2.SetAuthURLParam("access_type", "offline"),
-		oauth2.SetAuthURLParam("scope", "profile"))
+		oauth2.SetAuthURLParam("access_type", "offline"))
 	log.Debug("redirecting user to oauth2 consent page")
 	w.Header().Set("Location", url)
 	w.WriteHeader(http.StatusFound)
@@ -181,8 +181,8 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	defer cc.Close()
 	user, err := pb.NewUserDirectoryClient(cc).AuthorizeGoogle(context.TODO(),
 		&pb.GoogleUser{
-			ID: me.Id,
-			// Email:       me.Emails[0].Value,
+			ID:          me.Id,
+			Email:       me.Emails[0].Value,
 			DisplayName: me.DisplayName,
 			PictureURL:  me.Image.Url,
 		})
