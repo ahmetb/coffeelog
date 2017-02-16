@@ -3,7 +3,7 @@
 {{define "body"}}
     <div class="container">
     {{ if .user}}
-        <h3>Hello, {{.user.Name}}</h3>
+        <h3>Hello, {{.user.DisplayName}}</h3>
     {{ else }}
         <h3>Hello!</h3>
     {{ end }}

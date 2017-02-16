@@ -33,7 +33,7 @@ var (
 
 func main() {
 	log.SetLevel(log.DebugLevel)
-	log.Info("web frontend")
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
 	// read oauth2 config
@@ -83,46 +83,41 @@ func logHandler(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
-	type user struct {
-		Name    string
-		ID      string
-		Picture string
-	}
-
-	var userData *user
-
-	c, err := r.Cookie("oauth2_token")
-	if err != http.ErrNoCookie {
+	var user *pb.User
+	if c, err := r.Cookie("user"); err == http.ErrNoCookie {
+		log.Debug("no auth cookie found")
+	} else {
 		log.Debug("auth cookie found")
-		var token *oauth2.Token
-		if err := sc.Decode("oauth2_token", c.Value, &token); err != nil {
+		var userID string
+		if err := sc.Decode("user", c.Value, &userID); err != nil {
 			badRequest(w, errors.Wrap(err, "failed to decode cookie"))
 			return
 		}
 
-		tokenSource := cfg.TokenSource(oauth2.NoContext, token)
-		svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, tokenSource))
+		// reach out to the user directory to save/retrieve user
+		cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
 		if err != nil {
-			badRequest(w, errors.Wrap(err, "failed to construct g+ client"))
+			serverError(w, errors.Wrap(err, "failed to communicate the backend"))
 			return
 		}
-		me, err := plus.NewPeopleService(svc).Get("me").Do()
+		defer cc.Close()
+		userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
+			&pb.UserRequest{ID: userID})
 		if err != nil {
-			badRequest(w, errors.Wrap(err, "failed to query user g+ profile"))
+			serverError(w, errors.Wrap(err, "failed to retrieve the user"))
+			return
+		} else if !userResp.Found {
+			badRequest(w, errors.New("unrecognized user"))
 			return
 		}
-		userData = &user{ID: me.Id,
-			Name:    me.DisplayName,
-			Picture: me.Image.Url}
-	} else {
-		log.Debug("auth cookie not found")
+		user = userResp.User
 	}
 
 	tmpl := template.Must(template.ParseFiles(
 		filepath.Join("static", "template", "layout.html"),
 		filepath.Join("static", "template", "home.html")))
 
-	if err := tmpl.Execute(w, map[string]interface{}{"user": userData}); err != nil {
+	if err := tmpl.Execute(w, map[string]interface{}{"user": user}); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -161,19 +156,18 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 
 	tok, err := cfg.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		badRequest(w, errors.Wrap(err, "oauth2 token exchange failed"))
+		serverError(w, errors.Wrap(err, "oauth2 token exchange failed"))
 		return
 	}
 
-	tokenSource := cfg.TokenSource(oauth2.NoContext, tok)
-	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, tokenSource))
+	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, cfg.TokenSource(oauth2.NoContext, tok)))
 	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to construct g+ client"))
+		serverError(w, errors.Wrap(err, "failed to construct g+ client"))
 		return
 	}
 	me, err := plus.NewPeopleService(svc).Get("me").Do()
 	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to query user g+ profile"))
+		serverError(w, errors.Wrap(err, "failed to query user g+ profile"))
 		return
 	}
 	log.WithField("google.id", me.Id).Debug("retrieved google user")
@@ -181,7 +175,7 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	// reach out to the user directory to save/retrieve user
 	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to communicate the backend"))
+		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
 		return
 	}
 	defer cc.Close()
@@ -193,27 +187,23 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 			PictureURL:  me.Image.Url,
 		})
 	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to log in the user"))
+		serverError(w, errors.Wrap(err, "failed to log in the user"))
 		return
 	}
 	log.WithField("id", user.ID).Info("authenticated user with google")
 
-	// encrypt the cookie
-	newToken, err := tokenSource.Token()
+	// save the user id to cookies
+	// TODO implement as sessions
+	co, err := sc.Encode("user", user.ID)
 	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to extract token from tokensource"))
-		return
-	}
-	tokEncoded, err := sc.Encode("oauth2_token", newToken)
-	if err != nil {
-		badRequest(w, errors.Wrap(err, "failed to encode the token"))
+		serverError(w, errors.Wrap(err, "failed to encode the token"))
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:  "oauth2_token",
+		Name:  "user",
 		Path:  "/",
-		Value: tokEncoded,
+		Value: co,
 	})
 
 	log.WithField("user.id", me.Id).Info("authenticated user")
@@ -222,7 +212,15 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 func badRequest(w http.ResponseWriter, err error) {
-	log.WithField("http.status", http.StatusBadRequest).WithField("error", err).Warn("request failed")
-	w.WriteHeader(http.StatusBadRequest)
-	fmt.Fprint(w, errors.Wrap(err, "bad request"))
+	errorCode(w, http.StatusBadRequest, "bad request", err)
+}
+
+func serverError(w http.ResponseWriter, err error) {
+	errorCode(w, http.StatusInternalServerError, "server error", err)
+}
+
+func errorCode(w http.ResponseWriter, code int, msg string, err error) {
+	log.WithField("http.status", code).WithField("error", err).Warn(msg)
+	w.WriteHeader(code)
+	fmt.Fprint(w, errors.Wrap(err, msg))
 }

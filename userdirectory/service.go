@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"strconv"
 
@@ -81,6 +82,10 @@ func (u *userDirectory) GetUser(ctx context.Context, req *pb.UserRequest) (*pb.U
 	log := logrus.WithFields(logrus.Fields{
 		"op": "GetUser",
 		"id": req.GetID()})
+	start := time.Now()
+	defer func() {
+		log.WithField("elapsed", time.Since(start)).Debug("completed request")
+	}()
 	log.Debug("received request")
 
 	// TODO this block is highly duplicated, eliminate
