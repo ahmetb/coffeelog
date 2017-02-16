@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+service UserDirectory {
+    rpc AuthorizeGoogle(GoogleUser) returns (User) {}
+}
+
+message User {
+    string ID = 1;
+    string GoogleID = 10;
+}
+
+message GoogleUser {
+    string ID = 1;
+    string DisplayName = 2;
+    string PictureURL = 3;
+    string Email = 4;
+}
+
+service Hello {
+    rpc Say(HelloMessage) returns (HelloMessage) {}
+}
+
+message HelloMessage {
+    string Message=1;
+}
