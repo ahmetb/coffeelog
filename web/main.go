@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -9,6 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"google.golang.org/grpc"
+
+	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
@@ -23,6 +27,8 @@ var (
 	hashKey  = []byte("very-secret")      // TODO extract to env
 	blockKey = []byte("a-lot-secret-key") // TODO extract to env
 	sc       = securecookie.New(hashKey, blockKey)
+
+	userDirectoryBackend = "127.0.0.1:8001" // TODO use service discovery
 )
 
 func main() {
@@ -170,6 +176,27 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		badRequest(w, errors.Wrap(err, "failed to query user g+ profile"))
 		return
 	}
+	log.WithField("google.id", me.Id).Debug("retrieved google user")
+
+	// reach out to the user directory to save/retrieve user
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		badRequest(w, errors.Wrap(err, "failed to communicate the backend"))
+		return
+	}
+	defer cc.Close()
+	user, err := pb.NewUserDirectoryClient(cc).AuthorizeGoogle(context.TODO(),
+		&pb.GoogleUser{
+			ID: me.Id,
+			// Email:       me.Emails[0].Value,
+			DisplayName: me.DisplayName,
+			PictureURL:  me.Image.Url,
+		})
+	if err != nil {
+		badRequest(w, errors.Wrap(err, "failed to log in the user"))
+		return
+	}
+	log.WithField("id", user.ID).Info("authenticated user with google")
 
 	// encrypt the cookie
 	newToken, err := tokenSource.Token()

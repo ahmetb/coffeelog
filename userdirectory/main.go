@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+
 	addr := "127.0.0.1:8001" // TODO make configurable
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

@@ -9,9 +9,10 @@ It is generated from these files:
 	coffeelog.proto
 
 It has these top-level messages:
+	UserRequest
+	UserResponse
 	User
 	GoogleUser
-	HelloMessage
 */
 package coffeelog
 
@@ -35,6 +36,46 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type UserRequest struct {
+	ID string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
+}
+
+func (m *UserRequest) Reset()                    { *m = UserRequest{} }
+func (m *UserRequest) String() string            { return proto.CompactTextString(m) }
+func (*UserRequest) ProtoMessage()               {}
+func (*UserRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+func (m *UserRequest) GetID() string {
+	if m != nil {
+		return m.ID
+	}
+	return ""
+}
+
+type UserResponse struct {
+	Found bool  `protobuf:"varint,1,opt,name=Found" json:"Found,omitempty"`
+	User  *User `protobuf:"bytes,2,opt,name=User" json:"User,omitempty"`
+}
+
+func (m *UserResponse) Reset()                    { *m = UserResponse{} }
+func (m *UserResponse) String() string            { return proto.CompactTextString(m) }
+func (*UserResponse) ProtoMessage()               {}
+func (*UserResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *UserResponse) GetFound() bool {
+	if m != nil {
+		return m.Found
+	}
+	return false
+}
+
+func (m *UserResponse) GetUser() *User {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
 type User struct {
 	ID          string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
 	DisplayName string `protobuf:"bytes,2,opt,name=DisplayName" json:"DisplayName,omitempty"`
@@ -44,7 +85,7 @@ type User struct {
 func (m *User) Reset()                    { *m = User{} }
 func (m *User) String() string            { return proto.CompactTextString(m) }
 func (*User) ProtoMessage()               {}
-func (*User) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*User) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *User) GetID() string {
 	if m != nil {
@@ -77,7 +118,7 @@ type GoogleUser struct {
 func (m *GoogleUser) Reset()                    { *m = GoogleUser{} }
 func (m *GoogleUser) String() string            { return proto.CompactTextString(m) }
 func (*GoogleUser) ProtoMessage()               {}
-func (*GoogleUser) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*GoogleUser) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *GoogleUser) GetID() string {
 	if m != nil {
@@ -107,26 +148,11 @@ func (m *GoogleUser) GetEmail() string {
 	return ""
 }
 
-type HelloMessage struct {
-	Message string `protobuf:"bytes,1,opt,name=Message" json:"Message,omitempty"`
-}
-
-func (m *HelloMessage) Reset()                    { *m = HelloMessage{} }
-func (m *HelloMessage) String() string            { return proto.CompactTextString(m) }
-func (*HelloMessage) ProtoMessage()               {}
-func (*HelloMessage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *HelloMessage) GetMessage() string {
-	if m != nil {
-		return m.Message
-	}
-	return ""
-}
-
 func init() {
+	proto.RegisterType((*UserRequest)(nil), "UserRequest")
+	proto.RegisterType((*UserResponse)(nil), "UserResponse")
 	proto.RegisterType((*User)(nil), "User")
 	proto.RegisterType((*GoogleUser)(nil), "GoogleUser")
-	proto.RegisterType((*HelloMessage)(nil), "HelloMessage")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -141,6 +167,7 @@ const _ = grpc.SupportPackageIsVersion4
 
 type UserDirectoryClient interface {
 	AuthorizeGoogle(ctx context.Context, in *GoogleUser, opts ...grpc.CallOption) (*User, error)
+	GetUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 }
 
 type userDirectoryClient struct {
@@ -160,10 +187,20 @@ func (c *userDirectoryClient) AuthorizeGoogle(ctx context.Context, in *GoogleUse
 	return out, nil
 }
 
+func (c *userDirectoryClient) GetUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
+	err := grpc.Invoke(ctx, "/UserDirectory/GetUser", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for UserDirectory service
 
 type UserDirectoryServer interface {
 	AuthorizeGoogle(context.Context, *GoogleUser) (*User, error)
+	GetUser(context.Context, *UserRequest) (*UserResponse, error)
 }
 
 func RegisterUserDirectoryServer(s *grpc.Server, srv UserDirectoryServer) {
@@ -188,6 +225,24 @@ func _UserDirectory_AuthorizeGoogle_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserDirectory_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserDirectoryServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UserDirectory/GetUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserDirectoryServer).GetUser(ctx, req.(*UserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _UserDirectory_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "UserDirectory",
 	HandlerType: (*UserDirectoryServer)(nil),
@@ -196,69 +251,9 @@ var _UserDirectory_serviceDesc = grpc.ServiceDesc{
 			MethodName: "AuthorizeGoogle",
 			Handler:    _UserDirectory_AuthorizeGoogle_Handler,
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "coffeelog.proto",
-}
-
-// Client API for Hello service
-
-type HelloClient interface {
-	Say(ctx context.Context, in *HelloMessage, opts ...grpc.CallOption) (*HelloMessage, error)
-}
-
-type helloClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewHelloClient(cc *grpc.ClientConn) HelloClient {
-	return &helloClient{cc}
-}
-
-func (c *helloClient) Say(ctx context.Context, in *HelloMessage, opts ...grpc.CallOption) (*HelloMessage, error) {
-	out := new(HelloMessage)
-	err := grpc.Invoke(ctx, "/Hello/Say", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Server API for Hello service
-
-type HelloServer interface {
-	Say(context.Context, *HelloMessage) (*HelloMessage, error)
-}
-
-func RegisterHelloServer(s *grpc.Server, srv HelloServer) {
-	s.RegisterService(&_Hello_serviceDesc, srv)
-}
-
-func _Hello_Say_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(HelloServer).Say(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Hello/Say",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HelloServer).Say(ctx, req.(*HelloMessage))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Hello_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "Hello",
-	HandlerType: (*HelloServer)(nil),
-	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Say",
-			Handler:    _Hello_Say_Handler,
+			MethodName: "GetUser",
+			Handler:    _UserDirectory_GetUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -268,20 +263,22 @@ var _Hello_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("coffeelog.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 235 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x90, 0x41, 0x4b, 0x03, 0x31,
-	0x14, 0x84, 0xdb, 0x6d, 0x57, 0xf1, 0xd5, 0x5a, 0x78, 0x78, 0x08, 0x3d, 0x48, 0x09, 0x88, 0x3d,
-	0xe5, 0x50, 0x2f, 0x5e, 0x85, 0x88, 0x16, 0x54, 0x64, 0xa5, 0x3f, 0x20, 0x2e, 0xaf, 0x6b, 0x20,
-	0xe5, 0x95, 0x24, 0x3d, 0xac, 0xbf, 0x5e, 0x9a, 0xa6, 0xb8, 0x5e, 0x7b, 0x4a, 0xbe, 0x19, 0x98,
-	0x99, 0x04, 0x26, 0x35, 0xaf, 0xd7, 0x44, 0x8e, 0x1b, 0xb5, 0xf5, 0x1c, 0x59, 0x56, 0x30, 0x5c,
-	0x05, 0xf2, 0x78, 0x05, 0xc5, 0x52, 0x8b, 0xfe, 0xac, 0x3f, 0xbf, 0xa8, 0x8a, 0xa5, 0xc6, 0x19,
-	0x8c, 0xb4, 0x0d, 0x5b, 0x67, 0xda, 0x77, 0xb3, 0x21, 0x51, 0x24, 0xa3, 0x2b, 0xa1, 0x80, 0xf3,
-	0x0f, 0x5b, 0xc7, 0x9d, 0x27, 0x31, 0x48, 0xee, 0x11, 0x65, 0x04, 0x78, 0x66, 0x6e, 0x1c, 0x9d,
-	0x98, 0x7c, 0x03, 0x90, 0xa3, 0x56, 0xd5, 0x6b, 0x0e, 0xef, 0x28, 0x78, 0x0d, 0xe5, 0xd3, 0xc6,
-	0x58, 0x27, 0x86, 0xc9, 0x3a, 0x80, 0x9c, 0xc3, 0xe5, 0x0b, 0x39, 0xc7, 0x6f, 0x14, 0x82, 0x69,
-	0xd2, 0xbe, 0x7c, 0xcd, 0xe5, 0x47, 0x5c, 0x3c, 0xc0, 0x78, 0xbf, 0x4c, 0x5b, 0x4f, 0x75, 0x64,
-	0xdf, 0xe2, 0x1d, 0x4c, 0x1e, 0x77, 0xf1, 0x9b, 0xbd, 0xfd, 0xa1, 0xc3, 0x72, 0x1c, 0xa9, 0xbf,
-	0x27, 0x4c, 0x4b, 0xb5, 0x3f, 0x64, 0x6f, 0xa1, 0xa0, 0x4c, 0x1d, 0x78, 0x0b, 0x83, 0x4f, 0xd3,
-	0xe2, 0x58, 0x75, 0x2b, 0xa7, 0xff, 0x51, 0xf6, 0xbe, 0xce, 0xd2, 0x27, 0xdf, 0xff, 0x06, 0x00,
-	0x00, 0xff, 0xff, 0x8e, 0x25, 0x1e, 0x27, 0x77, 0x01, 0x00, 0x00,
+	// 260 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x51, 0xd1, 0x4a, 0xc3, 0x30,
+	0x14, 0x5d, 0xeb, 0xe6, 0xdc, 0xed, 0xe6, 0x20, 0xf8, 0x10, 0x07, 0x4a, 0xc9, 0x8b, 0x7d, 0xca,
+	0xc3, 0xfc, 0x00, 0x11, 0xaa, 0x63, 0x20, 0x22, 0x81, 0x7d, 0x40, 0x57, 0xef, 0x66, 0xa0, 0xdb,
+	0xad, 0x49, 0xfa, 0x30, 0xbf, 0x5e, 0x9a, 0x54, 0x2c, 0x3e, 0xfa, 0x78, 0xce, 0xb9, 0xf7, 0xe4,
+	0xe4, 0x5c, 0x98, 0x97, 0xb4, 0xdb, 0x21, 0x56, 0xb4, 0x97, 0xb5, 0x21, 0x47, 0xe2, 0x06, 0x92,
+	0x8d, 0x45, 0xa3, 0xf0, 0xb3, 0x41, 0xeb, 0xd8, 0x25, 0xc4, 0xeb, 0x9c, 0x47, 0x69, 0x94, 0x4d,
+	0x54, 0xbc, 0xce, 0xc5, 0x03, 0x4c, 0x83, 0x6c, 0x6b, 0x3a, 0x5a, 0x64, 0x57, 0x30, 0x7a, 0xa6,
+	0xe6, 0xf8, 0xee, 0x47, 0x2e, 0x54, 0x00, 0xec, 0x1a, 0x86, 0xed, 0x14, 0x8f, 0xd3, 0x28, 0x4b,
+	0x96, 0x23, 0xe9, 0x57, 0x3c, 0x25, 0x54, 0x90, 0xfe, 0x1a, 0xb3, 0x14, 0x92, 0x5c, 0xdb, 0xba,
+	0x2a, 0x4e, 0xaf, 0xc5, 0x01, 0xfd, 0xe6, 0x44, 0xf5, 0x29, 0xc6, 0x61, 0xfc, 0xa6, 0x4b, 0xd7,
+	0x18, 0xe4, 0x67, 0x5e, 0xfd, 0x81, 0xc2, 0x01, 0xac, 0x88, 0xf6, 0x15, 0xfe, 0xd3, 0xf9, 0x16,
+	0xa0, 0xb3, 0xda, 0xa8, 0x97, 0xce, 0xbc, 0xc7, 0xb4, 0x9f, 0x7c, 0x3a, 0x14, 0xba, 0xe2, 0x43,
+	0x2f, 0x05, 0xb0, 0xdc, 0xc2, 0xac, 0x7d, 0x2f, 0xd7, 0x06, 0x4b, 0x47, 0xe6, 0xc4, 0xee, 0x60,
+	0xfe, 0xd8, 0xb8, 0x0f, 0x32, 0xfa, 0x0b, 0x43, 0x1e, 0x96, 0xc8, 0xdf, 0x60, 0x8b, 0xd0, 0x83,
+	0x18, 0xb0, 0x0c, 0xc6, 0x2b, 0x74, 0x3e, 0xec, 0x54, 0xf6, 0xda, 0x5e, 0xcc, 0x64, 0xbf, 0x5c,
+	0x31, 0xd8, 0x9e, 0xfb, 0xa3, 0xdc, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0xa4, 0x46, 0x40, 0x39,
+	0xa7, 0x01, 0x00, 0x00,
 }

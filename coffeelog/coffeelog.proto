@@ -2,6 +2,16 @@ syntax = "proto3";
 
 service UserDirectory {
     rpc AuthorizeGoogle(GoogleUser) returns (User) {}
+    rpc GetUser(UserRequest) returns (UserResponse) {}
+}
+
+message UserRequest {
+    string ID = 1;
+}
+
+message UserResponse {
+    bool Found = 1;
+    User User = 2;
 }
 
 message User {
@@ -15,12 +25,4 @@ message GoogleUser {
     string DisplayName = 2;
     string PictureURL = 3;
     string Email = 4;
-}
-
-service Hello {
-    rpc Say(HelloMessage) returns (HelloMessage) {}
-}
-
-message HelloMessage {
-    string Message=1;
 }
