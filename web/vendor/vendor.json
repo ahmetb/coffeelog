@@ -27,12 +27,6 @@
 			"revisionTime": "2017-02-14T17:46:59Z"
 		},
 		{
-			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
-			"path": "github.com/golang/protobuf/proto",
-			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
-			"revisionTime": "2016-11-17T03:31:26Z"
-		},
-		{
 			"checksumSHA1": "wC7CFuvH13NfTs5LOdIldYKWvlI=",
 			"path": "github.com/google/google-api-go-client/plus/v1",
 			"revision": "bc20c61134e1d25265dd60049f5735381e79b631",
@@ -73,12 +67,6 @@
 			"path": "github.com/sirupsen/logrus",
 			"revision": "7f4b1adc791766938c29457bed0703fb9134421a",
 			"revisionTime": "2017-02-15T16:43:24Z"
-		},
-		{
-			"checksumSHA1": "Y+HGqEkYM15ir+J93MEaHdyFy0c=",
-			"path": "golang.org/x/net/context",
-			"revision": "61557ac0112b576429a0df080e1c2cef5dfbb642",
-			"revisionTime": "2017-01-26T11:54:58Z"
 		},
 		{
 			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
@@ -235,12 +223,6 @@
 			"path": "google.golang.org/appengine/urlfetch",
 			"revision": "2e4a801b39fc199db615bfca7d0b9f8cd9580599",
 			"revisionTime": "2017-02-06T20:30:24Z"
-		},
-		{
-			"checksumSHA1": "2RS5ZJsg2nr6TnTDLwL7Eq/Np78=",
-			"path": "google.golang.org/grpc",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
 		},
 		{
 			"checksumSHA1": "08icuA15HRkdYCt6H+Cs90RPQsY=",
