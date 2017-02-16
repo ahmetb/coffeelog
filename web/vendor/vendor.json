@@ -223,66 +223,6 @@
 			"path": "google.golang.org/appengine/urlfetch",
 			"revision": "2e4a801b39fc199db615bfca7d0b9f8cd9580599",
 			"revisionTime": "2017-02-06T20:30:24Z"
-		},
-		{
-			"checksumSHA1": "08icuA15HRkdYCt6H+Cs90RPQsY=",
-			"path": "google.golang.org/grpc/codes",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "AGkvu7gY1jWK7v5s9a8qLlH2gcQ=",
-			"path": "google.golang.org/grpc/credentials",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "3Lt5hNAG8qJAYSsNghR5uA1zQns=",
-			"path": "google.golang.org/grpc/grpclog",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "T3Q0p8kzvXFnRkMaK/G8mCv6mc0=",
-			"path": "google.golang.org/grpc/internal",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "XXpD8+S3gLrfmCLOf+RbxblOQkU=",
-			"path": "google.golang.org/grpc/metadata",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "4GSUFhOQ0kdFlBH4D5OTeKy78z0=",
-			"path": "google.golang.org/grpc/naming",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "3RRoLeH6X2//7tVClOVzxW2bY+E=",
-			"path": "google.golang.org/grpc/peer",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "wzkOAxlah+y75EpH0QVgzb8hdfc=",
-			"path": "google.golang.org/grpc/stats",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "N0TftT6/CyWqp6VRi2DqDx60+Fo=",
-			"path": "google.golang.org/grpc/tap",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
-		},
-		{
-			"checksumSHA1": "b9RDUPOmWBfHe9cM8UVilfyF/vE=",
-			"path": "google.golang.org/grpc/transport",
-			"revision": "dcd2661469bc75407aee564bf46b3da1d8fa5590",
-			"revisionTime": "2017-02-14T18:41:25Z"
 		}
 	],
 	"rootPath": "github.com/ahmetalpbalkan/coffeelog/web"
