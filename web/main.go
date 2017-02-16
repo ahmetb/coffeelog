@@ -54,9 +54,8 @@ func main() {
 	r.PathPrefix("/static/").Handler(logHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP))
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000", // TODO make configurable
-		Handler: r,
-	}
-	log.WithField("addr", srv.Addr).Info("starting to listen")
+		Handler: r}
+	log.WithField("addr", srv.Addr).Info("starting to listen on http")
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 

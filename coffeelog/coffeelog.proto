@@ -6,7 +6,8 @@ service UserDirectory {
 
 message User {
     string ID = 1;
-    string GoogleID = 10;
+    string DisplayName = 2;
+    string Picture = 3;
 }
 
 message GoogleUser {
