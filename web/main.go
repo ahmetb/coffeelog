@@ -106,11 +106,11 @@ func home(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			serverError(w, errors.Wrap(err, "failed to retrieve the user"))
 			return
-		} else if !userResp.Found {
+		} else if !userResp.GetFound() {
 			badRequest(w, errors.New("unrecognized user"))
 			return
 		}
-		user = userResp.User
+		user = userResp.GetUser()
 	}
 
 	tmpl := template.Must(template.ParseFiles(

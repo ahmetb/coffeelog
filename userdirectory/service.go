@@ -63,10 +63,10 @@ func (u *userDirectory) AuthorizeGoogle(ctx context.Context, goog *pb.GoogleUser
 	user, err := u.GetUser(ctx, &pb.UserRequest{ID: id})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to retrieve user")
-	} else if !user.Found {
+	} else if !user.GetFound() {
 		return nil, errors.New("cannot find user that is just created")
 	}
-	return user.User, nil
+	return user.GetUser(), nil
 }
 
 func (u *userDirectory) GetUser(ctx context.Context, req *pb.UserRequest) (*pb.UserResponse, error) {

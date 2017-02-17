@@ -1,9 +1,60 @@
 {{define "title"}}Home{{end}}
 
 {{define "body"}}
-    <div class="container">
+    <div class="row">
     {{ if .user}}
-        <h3>Hello, {{.user.DisplayName}}</h3>
+        <script type="text/javascript">
+        $(document).ready(function() {
+            $('input#drink').autocomplete({
+                minLength:0,
+                data: {
+                    "Latte": null,
+                    "Espresso": null,
+                    "Macchiato": null,
+                    "Cortado": null,
+                    "Americano": null,
+                    "Cappuccino": null,
+                    "Flat white": null,
+                    "Brewed coffee": null
+                });
+        });
+        </script>
+        <div class="record-form col m6 offset-m3 s12">
+        <form action="#">
+            <h3>Log caffeine</h3>
+            <!--
+                - P0 homebrew: checkbox
+                    - method: select
+                - P0 drink: autocomplete, chip
+                    - amount: slider with stepping
+                        - shots: 1,2,3,4
+                        - amount: 8oz, 12oz, 16oz, 20oz
+                - P2 location: autocomplete + rpc, chip
+                - P0  picture: file picker
+                - P2 date:  datepicker + select
+                - P1: roaster: autocomplete + rpc, chip
+                    - P3: origin: autocomplete + offline, chip
+                    - P3: beans: autocomplete + rpc, chip
+            -->
+            <div class="row">
+                <div class="input-field switch col s12">
+                <label>
+                    Coffee Shop
+                    <input type="checkbox">
+                    <span class="lever"></span>
+                    Homebrew
+                </label>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input type="text" id="drink" class="autocomplete">
+                    <label for="drink">Drink</label>
+                </div>
+            </div>
+        </form>
+        </div>
     {{ else }}
         <h3>Hello!</h3>
     {{ end }}
