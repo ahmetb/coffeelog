@@ -84,12 +84,16 @@
                     <label for="roaster">Roaster</label>
                 </div>
                 <div class="input-field col s12 m6">
-                    <select id="origin" name="origin">
-                        <option value="" disabled>Country</option>
-                        <option value="Kenya">Kenya</option>
-                        <option value="Ethiopia">Ethiopia</option>
+                    <select name="origin" type="origin">
+                        <option value="" disabled selected>Origin Country</option>
+                    {{range $k, $v := .originCountries}}
+                        <optgroup label="{{$k}}">
+                            {{range $country := $v}}
+                            <option value="{{$country}}">{{$country}}</option>
+                            {{end}}
+                        </optgroup>
+                    {{end}}
                     </select>
-                    <label>Origin</label>
                 </div>
             </div>
 
@@ -103,8 +107,8 @@
                         <input class="file-path validate" type="text">
                     </div>
                 </div>
-                <div class="col s6 right-align">
-                    <button class="btn waves-effect waves-light blue" type="submit">Log Drink</button>
+                <div class="col s6">
+                    <button class="btn waves-effect waves-light blue right" type="submit">Log Drink</button>
                 </div>
             </div>
         </form>

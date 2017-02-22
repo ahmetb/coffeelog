@@ -119,7 +119,9 @@ func home(w http.ResponseWriter, r *http.Request) {
 		filepath.Join("static", "template", "layout.html"),
 		filepath.Join("static", "template", "home.html")))
 
-	if err := tmpl.Execute(w, map[string]interface{}{"user": user}); err != nil {
+	if err := tmpl.Execute(w, map[string]interface{}{
+		"user":            user,
+		"originCountries": originCountries}); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -291,3 +293,11 @@ func errorCode(w http.ResponseWriter, code int, msg string, err error) {
 	w.WriteHeader(code)
 	fmt.Fprint(w, errors.Wrap(err, msg))
 }
+
+var (
+	originCountries = map[string][]string{
+		"Africa":   {"Kenya", "Ethiophia", "Nigeria", "Rwanda"},
+		"Americas": {"Colombia", "Venezuela", "Brazil", "Peru", "Cuba", "Ecuador", "Honduras", "Mexico", "Costa Rica"},
+		"Asia":     {"Indonesia", "India", "Vietnam"},
+	}
+)
