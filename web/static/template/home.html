@@ -6,6 +6,7 @@
         <script type="text/javascript">
         $(document).ready(function() {
             $('select').material_select();
+
             $('#drink').autocomplete({
                 minLength:0,
                 data: {
@@ -21,6 +22,19 @@
             $("#homebrew").change(function() {
                 (this.checked) ? $('.brew-info').show(): $('.brew-info').hide();
             });
+
+            jQuery('#roaster').autocomplete({
+                minLength:0,
+                data: {
+                    "Blue Bottle Coffee": null,
+                    "Espresso Vivace": null,
+                    "Stumptown Coffee": null,
+                    "Caffe Vita": null,
+                    "Caffe Ladro": null,
+                    "Elm Coffee Roasters": null,
+                    "Olympia Coffee Roasting Co.": null,
+                    "Ritual Coffee": null
+                }});
         });
         </script>
         <div class="record-form col s12 m9 offset-m2 l8 offset-l2">

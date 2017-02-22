@@ -285,7 +285,6 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 		}
 		entry.WithField("size", len(b)).Debug("uploaded file is read")
 	}
-
 }
 
 func errorCode(w http.ResponseWriter, code int, msg string, err error) {
