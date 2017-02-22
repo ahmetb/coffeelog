@@ -5,7 +5,8 @@
     {{ if .user}}
         <script type="text/javascript">
         $(document).ready(function() {
-            $('input#drink').autocomplete({
+            $('select').material_select();
+            $('#drink').autocomplete({
                 minLength:0,
                 data: {
                     "Latte": null,
@@ -16,11 +17,14 @@
                     "Cappuccino": null,
                     "Flat white": null,
                     "Brewed coffee": null
-                });
+                }});
+            $("#homebrew").change(function() {
+                (this.checked) ? $('.brew-info').show(): $('.brew-info').hide();
+            });
         });
         </script>
-        <div class="record-form col m6 offset-m3 s12">
-        <form action="#">
+        <div class="record-form col s12 m9 offset-m2 l8 offset-l2">
+        <form action="/coffee" method="post" enctype="multipart/form-data">
             <h3>Log caffeine</h3>
             <!--
                 - P0 homebrew: checkbox
@@ -30,7 +34,6 @@
                         - shots: 1,2,3,4
                         - amount: 8oz, 12oz, 16oz, 20oz
                 - P2 location: autocomplete + rpc, chip
-                - P0  picture: file picker
                 - P2 date:  datepicker + select
                 - P1: roaster: autocomplete + rpc, chip
                     - P3: origin: autocomplete + offline, chip
@@ -40,17 +43,68 @@
                 <div class="input-field switch col s12">
                 <label>
                     Coffee Shop
-                    <input type="checkbox">
+                    <input type="checkbox" id="homebrew">
                     <span class="lever"></span>
                     Homebrew
                 </label>
                 </div>
             </div>
+
             <br/>
+
             <div class="row">
                 <div class="input-field col s12">
-                    <input type="text" id="drink" class="autocomplete">
+                    <input type="text" id="drink" name="drink" class="autocomplete">
                     <label for="drink">Drink</label>
+                </div>
+            </div>
+
+            <div class="row brew-info" style="display:none;">
+                <div class="input-field col s12">
+                    <select id="brew-method" name="brew-method">
+                        <option value="" disabled>Brew Method</option>
+                        <option>Espresso</option>
+                        <option>Chemex</option>
+                        <option>Aeropress</option>
+                        <option>Hario V60</option>
+                        <option>French press</option>
+                        <option>Dripper</option>
+                        <option>Cold Brew</option>
+                        <option>Moka Pot</option>
+                        <option>Turkish coffee</option>
+                        <option>Ethiopian ceremony</option>
+                    </select>
+                    <label>Brew method</label>
+                </div>
+            </div>
+
+            <div class="row beans-info">
+                <div class="input-field col s12 m6">
+                    <input type="text" id="roaster" name="roaster" class="autocomplete"/>
+                    <label for="roaster">Roaster</label>
+                </div>
+                <div class="input-field col s12 m6">
+                    <select id="origin" name="origin">
+                        <option value="" disabled>Country</option>
+                        <option value="Kenya">Kenya</option>
+                        <option value="Ethiopia">Ethiopia</option>
+                    </select>
+                    <label>Origin</label>
+                </div>
+            </div>
+
+            <div class="row file-field input-field">
+                <div class="col s6">
+                    <div class="btn waves-effect waves-light">
+                        <span>Add picture</span>
+                        <input type="file" id="picture" name="picture">
+                    </div>
+                    <div class="file-path-wrapper hide-on-med-and-down">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+                <div class="col s6 right-align">
+                    <button class="btn waves-effect waves-light blue" type="submit">Log Drink</button>
                 </div>
             </div>
         </form>

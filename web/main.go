@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -53,11 +54,12 @@ func main() {
 
 	// set up server
 	r := mux.NewRouter()
+	r.PathPrefix("/static/").Handler(logHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP))
 	r.HandleFunc("/", logHandler(home)).Methods(http.MethodGet)
 	r.HandleFunc("/login", logHandler(login)).Methods(http.MethodGet)
 	r.HandleFunc("/logout", logHandler(logout)).Methods(http.MethodGet)
 	r.HandleFunc("/oauth2callback", logHandler(oauth2Callback)).Methods(http.MethodGet)
-	r.PathPrefix("/static/").Handler(logHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP))
+	r.HandleFunc("/coffee", logHandler(logCoffee)).Methods(http.MethodPost)
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000", // TODO make configurable
 		Handler: r}
@@ -217,6 +219,71 @@ func badRequest(w http.ResponseWriter, err error) {
 
 func serverError(w http.ResponseWriter, err error) {
 	errorCode(w, http.StatusInternalServerError, "server error", err)
+}
+
+func logCoffee(w http.ResponseWriter, r *http.Request) {
+	// TODO de-duplicate cookie decoding + user authenticating below.
+	c, err := r.Cookie("user")
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	var userID string
+	if err := sc.Decode("user", c.Value, &userID); err != nil {
+		badRequest(w, errors.Wrap(err, "failed to decode cookie"))
+		return
+	}
+
+	// reach out to the user directory to save/retrieve user
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
+		return
+	}
+	defer cc.Close()
+	userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
+		&pb.UserRequest{ID: userID})
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to retrieve the user"))
+		return
+	} else if !userResp.GetFound() {
+		badRequest(w, errors.New("unrecognized user"))
+		return
+	}
+	user := userResp.GetUser()
+	_ = user // TODO remove
+
+	if err := r.ParseMultipartForm(16 * 1024 * 1024); err != nil { // max 16 mb memory
+		badRequest(w, errors.Wrap(err, "failed to parse request"))
+		return
+	}
+
+	// parse picture
+	f, h, err := r.FormFile("picture")
+	if err == http.ErrMissingFile {
+		log.Debug("no file was uploaded")
+	} else if err != nil {
+		badRequest(w, errors.Wrap(err, "failed to parse form file"))
+		return
+	} else {
+		defer f.Close()
+
+		ct := h.Header.Get("Content-Type")
+		entry := log.WithField("content-type", ct).WithField("name", h.Filename)
+		entry.Debug("upload received")
+		if !strings.HasPrefix(ct, "image/") {
+			badRequest(w, errors.New("uploaded file is not a photo"))
+			return
+		}
+
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			serverError(w, errors.Wrap(err, "failed to read file"))
+			return
+		}
+		entry.WithField("size", len(b)).Debug("uploaded file is read")
+	}
+
 }
 
 func errorCode(w http.ResponseWriter, code int, msg string, err error) {
