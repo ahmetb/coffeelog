@@ -31,7 +31,8 @@ var (
 	blockKey = []byte("a-lot-secret-key") // TODO extract to env
 	sc       = securecookie.New(hashKey, blockKey)
 
-	userDirectoryBackend = "127.0.0.1:8001" // TODO use service discovery
+	userDirectoryBackend   = "127.0.0.1:8001" // TODO use service discovery
+	coffeeDirectoryBackend = "127.0.0.1:8002" // TODO use service discovery
 )
 
 func main() {
@@ -56,7 +57,7 @@ func main() {
 
 	// set up server
 	r := mux.NewRouter()
-	r.PathPrefix("/static/").Handler(logHandler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP))
+	r.PathPrefix("/static/").HandlerFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP)
 	r.HandleFunc("/", logHandler(home)).Methods(http.MethodGet)
 	r.HandleFunc("/login", logHandler(login)).Methods(http.MethodGet)
 	r.HandleFunc("/logout", logHandler(logout)).Methods(http.MethodGet)
@@ -301,14 +302,33 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 		Value string `json:"value"`
 	}
 
-	// TODO actually query
-	v := []result{{"result:" + q}}
-	log.WithField("q", q).Debug("autocomplete query")
+	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
+		return
+	}
+	defer cc.Close()
 
+	resp, err := pb.NewCoffeeDirectoryClient(cc).List(context.TODO(), new(pb.RoastersRequest))
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to query the roasters"))
+		return
+	}
+
+	var v []result
+	q = strings.ToLower(q)
+	for _, r := range resp.GetResults() {
+		if strings.Contains(strings.ToLower(r.GetName()), q) {
+			v = append(v, result{r.GetName()})
+		}
+	}
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		serverError(w, errors.Wrap(err, "failed to encode the response"))
 		return
 	}
+	log.WithFields(log.Fields{
+		"q":       q,
+		"matches": len(v)}).Debug("autocomplete response")
 }
 
 func errorCode(w http.ResponseWriter, code int, msg string, err error) {

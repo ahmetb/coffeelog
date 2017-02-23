@@ -17,7 +17,7 @@ type roaster struct {
 	K         *datastore.Key `datastore:"__key__"`
 	Name      string         `datastore:"Name"`
 	Picture   string         `datastore:"Picture"`
-	CreatedBy int64          `datastore:"CreatedBy"`
+	CreatedBy string         `datastore:"CreatedBy"`
 }
 
 func (r *roaster) ToProto() *pb.Roaster {
@@ -77,5 +77,6 @@ func (c *coffeeDirectory) List(ctx context.Context, _ *pb.RoastersRequest) (*pb.
 		r = append(r, v.ToProto())
 	}
 	log.WithField("count", len(r)).Debug("retrieved roasters list")
+	resp.Results = r
 	return resp, nil
 }
