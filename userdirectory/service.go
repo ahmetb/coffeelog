@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"time"
-
 	"strconv"
+	"time"
 
 	"cloud.google.com/go/datastore"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"

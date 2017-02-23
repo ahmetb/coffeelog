@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"path"
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"cloud.google.com/go/storage"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
@@ -14,6 +18,8 @@ import (
 const (
 	kindRoaster  = "Roaster"  // datastore kind
 	kindActivity = "Activity" // datastore kind
+
+	bucketPics = "coffeepics" // storage bucket
 )
 
 type service struct {
@@ -130,7 +136,16 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 		roaster = rr.GetRoaster()
 	}
 
-	// TODO upload picture
+	var picURL string
+	if req.GetPicture() != nil {
+		url, err := uploadPicture(ctx, req.GetPicture().GetFilename(),
+			req.GetPicture().GetContentType(),
+			req.GetPicture().GetData())
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to upload picture")
+		}
+		picURL = url
+	}
 
 	ts, err := ptypes.Timestamp(req.GetDate())
 	if err != nil {
@@ -149,7 +164,7 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 		RoasterID:   roaster.GetID(),
 		RoasterName: roaster.GetName(),
 		Notes:       req.GetNotes(),
-		PictureURL:  "", // TODO fix
+		PictureURL:  picURL, // TODO fix
 	}
 	k, err := c.ds.Put(ctx, datastore.IncompleteKey(kindActivity, nil), &v)
 	if err != nil {
@@ -158,4 +173,27 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 
 	log.WithField("id", k.ID).Info("activity saved to datastore")
 	return &pb.PostActivityResponse{ID: k.ID}, nil
+}
+
+func uploadPicture(ctx context.Context, filename, contentType string, b []byte) (string, error) {
+	t := time.Now()
+	cl, err := storage.NewClient(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create storage client")
+	}
+	defer cl.Close()
+
+	// TODO generate random id
+	id := uuid.NewV4()
+	fn := fmt.Sprintf("%d/%02d/%s%s", t.Year(), t.Month(), id, path.Ext(filename))
+	w := cl.Bucket(bucketPics).Object(fn).NewWriter(ctx)
+	w.ContentType = contentType
+	w.ACL = []storage.ACLRule{{Entity: storage.AllUsers, Role: storage.RoleReader}}
+	if _, err := w.Write(b); err != nil {
+		return "", errors.Wrap(err, "failed to write to storage object")
+	}
+	log.WithFields(logrus.Fields{"bucket": bucketPics,
+		"object": fn}).Debug("uploaded file")
+	url := fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketPics, fn)
+	return url, errors.Wrap(w.Close(), "failed to close object writer")
 }

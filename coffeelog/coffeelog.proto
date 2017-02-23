@@ -88,7 +88,13 @@ message PostActivityRequest {
     string RoasterName = 8;
     string Origin = 7;
     string Notes = 9;
-    bytes Picture = 10;
+
+    message File {
+        bytes Data = 1;
+        string Filename = 2;
+        string ContentType = 3;
+    }
+    File Picture = 10;
 }
 
 message PostActivityResponse {

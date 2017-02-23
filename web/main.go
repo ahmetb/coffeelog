@@ -319,8 +319,12 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 		RoasterName: roasterName,
 		Homebrew:    homebrew,
 		Method:      method,
-		Picture:     picture,
-		Notes:       notes,
+		Picture: &pb.PostActivityRequest_File{
+			Data:        picture,
+			ContentType: h.Header.Get("Content-Type"),
+			Filename:    h.Filename,
+		},
+		Notes: notes,
 	})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to save activity"))
