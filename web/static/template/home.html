@@ -7,9 +7,7 @@
         $(document).ready(function() {
             $('select').material_select();
 
-            $('#drink').autocomplete({
-                minLength:0,
-                data: {
+            var drinks = {
                     "Latte": null,
                     "Espresso": null,
                     "Macchiato": null,
@@ -17,16 +15,40 @@
                     "Americano": null,
                     "Cappuccino": null,
                     "Flat white": null,
-                    "Brewed coffee": null
-            }});
+                    "Brewed coffee": null,
+                    "Iced coffee": null,
+                    "Decaf coffee": null,
+            }
+
+            var nonEspressos = ["Brewed coffee", "Iced coffee", "Decaf coffee"];
+
+            $('#drink').autocomplete({
+                minLength:0,
+                data: drinks});
+
+            $('#drink').on("change", function(){
+                if (nonEspressos.indexOf($(this).val()) != -1) {
+                    console.log($(this).val() + " = coffee");
+                    $("#amount").attr('min',6).attr('max',20).val(12);
+                    $("#amount-unit").text("oz.")
+                } else if ($(this).val() in drinks) {
+                    console.log($(this).val() + " = espresso");
+                    $("#amount").attr('min',1).attr('max',4).val(2);
+                    $("#amount-unit").text("shots")
+                } else {
+                    console.log($(this).val() + " = unknown");
+                }
+                $("#amount").trigger('change');
+            });
 
             $("#homebrew").change(function() {
                 (this.checked) ? $('.brew-info').show(): $('.brew-info').hide();
             });
 
-            jQuery('#roaster').autocompleteajax({
-                minLength:1,
+            $('#roaster').autocompleteajax({
+                minLength:0,
                 data:{},
+                delay: 350,
                 ajax: {
                     url: "/autocomplete/roaster",
                     method: "get",
@@ -36,6 +58,9 @@
                     console.log(res);
                 }
             });
+
+            $('#amount').on("change input", (function(){ $('#amount-val').text($(this).val()); }));
+            $('#amount').val("2").trigger("change");
         });
         </script>
         <div class="record-form col s12 m9 offset-m2 l8 offset-l2">
@@ -58,7 +83,7 @@
                 <div class="input-field switch col s12">
                 <label>
                     Coffee Shop
-                    <input type="checkbox" id="homebrew">
+                    <input type="checkbox" id="homebrew" name="homebrew">
                     <span class="lever"></span>
                     Homebrew
                 </label>
@@ -68,14 +93,12 @@
             <br/>
 
             <div class="row">
-                <div class="input-field col s12">
+                <div class="input-field col s12 m4">
                     <input type="text" id="drink" name="drink" class="autocomplete">
                     <label for="drink">Drink</label>
                 </div>
-            </div>
 
-            <div class="row brew-info" style="display:none;">
-                <div class="input-field col s12">
+                <div class="brew-info input-field col s12 m4" style="display:none;">
                     <select id="brew-method" name="brew-method">
                         <option value="" disabled>Brew Method</option>
                         <option>Espresso</option>
@@ -89,7 +112,13 @@
                         <option>Turkish coffee</option>
                         <option>Ethiopian ceremony</option>
                     </select>
-                    <label>Brew method</label>
+                    <label for="brew-method">Brew method</label>
+                </div>
+
+                <div class="input-field range-field col s12 m4">
+                    <input type="range" id="amount" name="amount" min="1" max="4" style="width: 75%;"/>
+                    <nobr><span id="amount-val"></span>
+                    <span id="amount-unit">shots</span></nobr>
                 </div>
             </div>
 
@@ -100,7 +129,7 @@
                 </div>
                 <div class="input-field col s12 m6">
                     <select name="origin" type="origin">
-                        <option value="" disabled selected>Origin Country</option>
+                        <option value="" disabled selected>Origin</option>
                     {{range $k, $v := .originCountries}}
                         <optgroup label="{{$k}}">
                             {{range $country := $v}}
@@ -109,6 +138,12 @@
                         </optgroup>
                     {{end}}
                     </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <textarea id="notes" name="notes" class="materialize-textarea"></textarea>
+                    <label for="textarea1">Tasting/Brewing Notes</label>
                 </div>
             </div>
 
