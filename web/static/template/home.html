@@ -59,8 +59,19 @@
                 }
             });
 
-            $('#amount').on("change input", (function(){ $('#amount-val').text($(this).val()); }));
+            $('#amount').on("change blur", (function(){ $('#amount-val').text($(this).val()); }));
             $('#amount').val("2").trigger("change");
+
+            $("#picture").on("change input val",(function(){
+                var input=this;
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {$('#picture-preview').attr('src', e.target.result).show();}
+                    reader.readAsDataURL(input.files[0]);
+                } else {
+                    $('#picture-preview').hide()
+                }
+            }));
         });
         </script>
         <div class="record-form col s12 m9 offset-m2 l8 offset-l2">
@@ -93,12 +104,12 @@
             <br/>
 
             <div class="row">
-                <div class="input-field col s12 m4">
+                <div class="input-field col s6 m4">
                     <input type="text" id="drink" name="drink" class="autocomplete">
                     <label for="drink">Drink</label>
                 </div>
 
-                <div class="brew-info input-field col s12 m4" style="display:none;">
+                <div class="brew-info input-field col s6 m4" style="display:none;">
                     <select id="brew-method" name="brew-method">
                         <option value="" disabled>Brew Method</option>
                         <option>Espresso</option>
@@ -123,11 +134,11 @@
             </div>
 
             <div class="row beans-info">
-                <div class="input-field col s12 m6">
+                <div class="input-field col s6">
                     <input type="text" id="roaster" name="roaster" class="autocomplete"/>
                     <label for="roaster">Roaster</label>
                 </div>
-                <div class="input-field col s12 m6">
+                <div class="input-field col s6">
                     <select name="origin" type="origin">
                         <option value="" disabled selected>Origin</option>
                     {{range $k, $v := .originCountries}}
@@ -160,6 +171,10 @@
                 <div class="col s6">
                     <button class="btn waves-effect waves-light blue right" type="submit">Log Drink</button>
                 </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12"><img id="picture-preview" style="height:auto;width:100%;"/></div>
             </div>
         </form>
         </div>
