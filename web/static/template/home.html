@@ -26,21 +26,28 @@
                 minLength:0,
                 data: drinks});
 
-            $('#drink').on("change", function(){
+            // update amount slider based on drink
+            $('#drink').on("val input change", function(){
                 if (nonEspressos.indexOf($(this).val()) != -1) {
                     console.log($(this).val() + " = coffee");
                     $("#amount").attr('min',6).attr('max',20).val(12);
-                    $("#amount-unit").text("oz.")
+                    $("#amount-unit-label").text("oz.");
+                    $("#amount-unit").text("oz");
+                    $('.amount-info').show();
                 } else if ($(this).val() in drinks) {
                     console.log($(this).val() + " = espresso");
                     $("#amount").attr('min',1).attr('max',4).val(2);
-                    $("#amount-unit").text("shots")
+                    $("#amount-unit-label").text("shots");
+                    $("#amount-unit").text("oz");
+                    $('.amount-info').show();
                 } else {
                     console.log($(this).val() + " = unknown");
+                    $('.amount-info').hide();
                 }
                 $("#amount").trigger('change');
             });
 
+            // show brew method input
             $("#homebrew").change(function() {
                 (this.checked) ? $('.brew-info').show(): $('.brew-info').hide();
             });
@@ -61,6 +68,7 @@
 
             $('#amount').on("change blur", (function(){ $('#amount-val').text($(this).val()); }));
             $('#amount').val("2").trigger("change");
+            $('#drink').trigger("change"); // to show the amount-info
 
             $("#picture").on("change input val",(function(){
                 var input=this;
@@ -69,7 +77,7 @@
                     reader.onload = function (e) {$('#picture-preview').attr('src', e.target.result).show();}
                     reader.readAsDataURL(input.files[0]);
                 } else {
-                    $('#picture-preview').hide()
+                    $('#picture-preview').hide();
                 }
             }));
         });
@@ -111,7 +119,7 @@
 
                 <div class="brew-info input-field col s6 m4" style="display:none;">
                     <select id="brew-method" name="brew-method">
-                        <option value="" disabled>Brew Method</option>
+                        <option value="" disabled selected>Choose a method</option>
                         <option>Espresso</option>
                         <option>Chemex</option>
                         <option>Aeropress</option>
@@ -126,10 +134,11 @@
                     <label for="brew-method">Brew method</label>
                 </div>
 
-                <div class="input-field range-field col s12 m4">
+                <div class="amount-info input-field range-field col s12 m4" style="display:none;">
                     <input type="range" id="amount" name="amount" min="1" max="4" style="width: 75%;"/>
                     <nobr><span id="amount-val"></span>
-                    <span id="amount-unit">shots</span></nobr>
+                    <span id="amount-unit-label">shots</span></nobr>
+                    <input name="amount-unit" type="hidden"/>
                 </div>
             </div>
 
