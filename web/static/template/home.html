@@ -32,13 +32,13 @@
                     console.log($(this).val() + " = coffee");
                     $("#amount").attr('min',6).attr('max',20).val(12);
                     $("#amount-unit-label").text("oz.");
-                    $("#amount-unit").text("oz");
+                    $("#amount-unit").val("oz");
                     $('.amount-info').show();
                 } else if ($(this).val() in drinks) {
                     console.log($(this).val() + " = espresso");
                     $("#amount").attr('min',1).attr('max',4).val(2);
                     $("#amount-unit-label").text("shots");
-                    $("#amount-unit").text("oz");
+                    $("#amount-unit").val("shots");
                     $('.amount-info').show();
                 } else {
                     console.log($(this).val() + " = unknown");
@@ -86,17 +86,9 @@
         <form action="/coffee" method="post" enctype="multipart/form-data">
             <h3>Log caffeine</h3>
             <!--
-                - P0 homebrew: checkbox
-                    - method: select
-                - P0 drink: autocomplete, chip
-                    - amount: slider with stepping
-                        - shots: 1,2,3,4
-                        - amount: 8oz, 12oz, 16oz, 20oz
                 - P2 location: autocomplete + rpc, chip
-                - P2 date:  datepicker + select
-                - P1: roaster: autocomplete + rpc, chip
-                    - P3: origin: autocomplete + offline, chip
-                    - P3: beans: autocomplete + rpc, chip
+                - P2 date: datepicker + select
+                - P3: beans name: autocomplete + rpc, chip
             -->
             <div class="row">
                 <div class="input-field switch col s12">
@@ -138,7 +130,7 @@
                     <input type="range" id="amount" name="amount" min="1" max="4" style="width: 75%;"/>
                     <nobr><span id="amount-val"></span>
                     <span id="amount-unit-label">shots</span></nobr>
-                    <input name="amount-unit" type="hidden"/>
+                    <input id="amount-unit" name="amount_unit" type="hidden"/>
                 </div>
             </div>
 

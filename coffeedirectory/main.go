@@ -12,6 +12,8 @@ import (
 
 const (
 	projectID = "ahmetb-starter" // TODO configurable
+
+	coffeeDirectoryBackend = "127.0.0.1:8002" // TODO use service discovery
 )
 
 var log *logrus.Entry
@@ -33,7 +35,9 @@ func main() {
 		log.Fatal(err)
 	}
 	grpcServer := grpc.NewServer()
-	pb.RegisterCoffeeDirectoryServer(grpcServer, &coffeeDirectory{ds})
+	svc := &service{ds}
+	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
+	pb.RegisterActivityDirectoryServer(grpcServer, svc)
 	log.WithField("addr", addr).WithField("service", "coffeedirectory").Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))
 }

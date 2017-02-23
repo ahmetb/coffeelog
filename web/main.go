@@ -2,20 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
-	"google.golang.org/grpc"
-
-	"encoding/json"
-
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
+	"github.com/golang/protobuf/ptypes"
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
@@ -23,6 +22,7 @@ import (
 	logrus "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -231,43 +231,14 @@ func serverError(w http.ResponseWriter, err error) {
 }
 
 func logCoffee(w http.ResponseWriter, r *http.Request) {
-	// TODO de-duplicate cookie decoding + user authenticating below.
-	c, err := r.Cookie("user")
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-	var userID string
-	if err := sc.Decode("user", c.Value, &userID); err != nil {
-		badRequest(w, errors.Wrap(err, "failed to decode cookie"))
-		return
-	}
-
-	// reach out to the user directory to save/retrieve user
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-		return
-	}
-	defer cc.Close()
-	userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
-		&pb.UserRequest{ID: userID})
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to retrieve the user"))
-		return
-	} else if !userResp.GetFound() {
-		badRequest(w, errors.New("unrecognized user"))
-		return
-	}
-	user := userResp.GetUser()
-	_ = user // TODO remove
-
 	if err := r.ParseMultipartForm(16 * 1024 * 1024); err != nil { // max 16 mb memory
 		badRequest(w, errors.Wrap(err, "failed to parse request"))
 		return
 	}
 
 	// parse picture
+	var picture []byte
+
 	f, h, err := r.FormFile("picture")
 	if err == http.ErrMissingFile {
 		log.Debug("no file was uploaded")
@@ -285,13 +256,80 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b, err := ioutil.ReadAll(f)
+		picture, err = ioutil.ReadAll(f)
 		if err != nil {
 			serverError(w, errors.Wrap(err, "failed to read file"))
 			return
 		}
-		entry.WithField("size", len(b)).Debug("uploaded file is read")
+		entry.WithField("size", len(picture)).Debug("uploaded file is read")
 	}
+
+	var (
+		drink         = r.FormValue("drink")
+		homebrew      = r.FormValue("homebrew") == "on"
+		amount        = r.FormValue("amount")
+		amountUnitStr = r.FormValue("amount_unit")
+		roasterName   = r.FormValue("roaster")
+		origin        = r.FormValue("origin")
+		method        = r.FormValue("method")
+		notes         = r.FormValue("notes")
+	)
+
+	amountN, _ := strconv.ParseInt(amount, 10, 32)
+	var amountU pb.PostActivityRequest_DrinkAmount_CaffeineUnit
+	switch amountUnitStr {
+	case "oz":
+		amountU = pb.PostActivityRequest_DrinkAmount_OUNCES
+	case "shots":
+		amountU = pb.PostActivityRequest_DrinkAmount_SHOTS
+	default:
+		amountU = pb.PostActivityRequest_DrinkAmount_UNSPECIFIED
+	}
+
+	log.WithFields(logrus.Fields{
+		"drink":         drink,
+		"homebrew":      homebrew,
+		"roasterName":   roasterName,
+		"origin":        origin,
+		"method":        method,
+		"picture_bytes": len(picture),
+		"amount":        fmt.Sprintf("%d %s", amountN, amountU),
+		"notes":         notes,
+	}).Info("received form")
+
+	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
+		return
+	}
+	defer cc.Close()
+
+	ts, err := ptypes.TimestampProto(time.Now())
+	if err != nil {
+		serverError(w, errors.Wrap(err, "cannot convert timestamp to proto"))
+	}
+	resp, err := pb.NewActivityDirectoryClient(cc).PostActivity(context.TODO(), &pb.PostActivityRequest{
+		Date: ts,
+		Amount: &pb.PostActivityRequest_DrinkAmount{
+			N:    int32(amountN),
+			Unit: amountU,
+		},
+		Drink:       drink,
+		Origin:      origin,
+		RoasterName: roasterName,
+		Homebrew:    homebrew,
+		Method:      method,
+		Picture:     picture,
+		Notes:       notes,
+	})
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to save activity"))
+		return
+	}
+	log.WithField("id", resp.GetID()).Info("activity posted")
+
+	w.Header().Set("Location", "/")
+	w.WriteHeader(http.StatusFound)
 }
 
 func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
@@ -312,7 +350,7 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cc.Close()
 
-	resp, err := pb.NewCoffeeDirectoryClient(cc).List(context.TODO(), new(pb.RoastersRequest))
+	resp, err := pb.NewRoasterDirectoryClient(cc).ListRoaster(context.TODO(), new(pb.RoastersRequest))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to query the roasters"))
 		return
@@ -342,7 +380,7 @@ func errorCode(w http.ResponseWriter, code int, msg string, err error) {
 
 var (
 	originCountries = map[string][]string{
-		"Africa":   {"Kenya", "Ethiophia", "Nigeria", "Rwanda"},
+		"Africa":   {"Kenya", "Ethiophia", "Nigeria", "Burundi", "Rwanda"},
 		"Americas": {"Colombia", "Venezuela", "Brazil", "Peru", "Cuba", "Ecuador", "Honduras", "Mexico", "Costa Rica"},
 		"Asia":     {"Indonesia", "India", "Vietnam"},
 	}

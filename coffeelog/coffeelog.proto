@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 service UserDirectory {
     rpc AuthorizeGoogle(GoogleUser) returns (User) {}
     rpc GetUser(UserRequest) returns (UserResponse) {}
@@ -28,10 +30,14 @@ message GoogleUser {
 }
 
 
-service CoffeeDirectory {
-    rpc Get(RoasterRequest) returns (RoasterResponse) {}
-    rpc Create(RoasterCreateRequest) returns (Roaster) {}
-    rpc List(RoastersRequest) returns (RoastersResponse) {}
+service RoasterDirectory {
+    rpc GetRoaster(RoasterRequest) returns (RoasterResponse) {}
+    rpc CreateRoaster(RoasterCreateRequest) returns (Roaster) {}
+    rpc ListRoaster(RoastersRequest) returns (RoastersResponse) {}
+}
+
+service ActivityDirectory {
+    rpc PostActivity(PostActivityRequest) returns (PostActivityResponse) {}
 }
 
 message Roaster {
@@ -60,4 +66,31 @@ message RoastersRequest {}
 
 message RoastersResponse {
     repeated Roaster Results = 1;
+}
+
+message PostActivityRequest {
+    string UserID = 1;
+    bool Homebrew = 2;
+    string Drink = 6;
+    string Method = 3;
+
+    message DrinkAmount {
+        int32 N = 1;
+        enum CaffeineUnit {
+            UNSPECIFIED = 0;
+            SHOTS = 1;
+            OUNCES = 2;
+        }
+        CaffeineUnit Unit = 2;
+    }
+    DrinkAmount Amount = 4;
+    google.protobuf.Timestamp Date = 5;
+    string RoasterName = 8;
+    string Origin = 7;
+    string Notes = 9;
+    bytes Picture = 10;
+}
+
+message PostActivityResponse {
+    int64 ID = 1;
 }

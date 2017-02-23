@@ -19,12 +19,15 @@ It has these top-level messages:
 	RoasterResponse
 	RoastersRequest
 	RoastersResponse
+	PostActivityRequest
+	PostActivityResponse
 */
 package coffeelog
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 
 import (
 	context "golang.org/x/net/context"
@@ -41,6 +44,32 @@ var _ = math.Inf
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+
+type PostActivityRequest_DrinkAmount_CaffeineUnit int32
+
+const (
+	PostActivityRequest_DrinkAmount_UNSPECIFIED PostActivityRequest_DrinkAmount_CaffeineUnit = 0
+	PostActivityRequest_DrinkAmount_SHOTS       PostActivityRequest_DrinkAmount_CaffeineUnit = 1
+	PostActivityRequest_DrinkAmount_OUNCES      PostActivityRequest_DrinkAmount_CaffeineUnit = 2
+)
+
+var PostActivityRequest_DrinkAmount_CaffeineUnit_name = map[int32]string{
+	0: "UNSPECIFIED",
+	1: "SHOTS",
+	2: "OUNCES",
+}
+var PostActivityRequest_DrinkAmount_CaffeineUnit_value = map[string]int32{
+	"UNSPECIFIED": 0,
+	"SHOTS":       1,
+	"OUNCES":      2,
+}
+
+func (x PostActivityRequest_DrinkAmount_CaffeineUnit) String() string {
+	return proto.EnumName(PostActivityRequest_DrinkAmount_CaffeineUnit_name, int32(x))
+}
+func (PostActivityRequest_DrinkAmount_CaffeineUnit) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{10, 0, 0}
+}
 
 type UserRequest struct {
 	ID string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
@@ -362,6 +391,136 @@ func (m *RoastersResponse) GetResults() []*Roaster {
 	return nil
 }
 
+type PostActivityRequest struct {
+	UserID      string                           `protobuf:"bytes,1,opt,name=UserID" json:"UserID,omitempty"`
+	Homebrew    bool                             `protobuf:"varint,2,opt,name=Homebrew" json:"Homebrew,omitempty"`
+	Drink       string                           `protobuf:"bytes,6,opt,name=Drink" json:"Drink,omitempty"`
+	Method      string                           `protobuf:"bytes,3,opt,name=Method" json:"Method,omitempty"`
+	Amount      *PostActivityRequest_DrinkAmount `protobuf:"bytes,4,opt,name=Amount" json:"Amount,omitempty"`
+	Date        *google_protobuf.Timestamp       `protobuf:"bytes,5,opt,name=Date" json:"Date,omitempty"`
+	RoasterName string                           `protobuf:"bytes,8,opt,name=RoasterName" json:"RoasterName,omitempty"`
+	Origin      string                           `protobuf:"bytes,7,opt,name=Origin" json:"Origin,omitempty"`
+	Notes       string                           `protobuf:"bytes,9,opt,name=Notes" json:"Notes,omitempty"`
+	Picture     []byte                           `protobuf:"bytes,10,opt,name=Picture,proto3" json:"Picture,omitempty"`
+}
+
+func (m *PostActivityRequest) Reset()                    { *m = PostActivityRequest{} }
+func (m *PostActivityRequest) String() string            { return proto.CompactTextString(m) }
+func (*PostActivityRequest) ProtoMessage()               {}
+func (*PostActivityRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *PostActivityRequest) GetUserID() string {
+	if m != nil {
+		return m.UserID
+	}
+	return ""
+}
+
+func (m *PostActivityRequest) GetHomebrew() bool {
+	if m != nil {
+		return m.Homebrew
+	}
+	return false
+}
+
+func (m *PostActivityRequest) GetDrink() string {
+	if m != nil {
+		return m.Drink
+	}
+	return ""
+}
+
+func (m *PostActivityRequest) GetMethod() string {
+	if m != nil {
+		return m.Method
+	}
+	return ""
+}
+
+func (m *PostActivityRequest) GetAmount() *PostActivityRequest_DrinkAmount {
+	if m != nil {
+		return m.Amount
+	}
+	return nil
+}
+
+func (m *PostActivityRequest) GetDate() *google_protobuf.Timestamp {
+	if m != nil {
+		return m.Date
+	}
+	return nil
+}
+
+func (m *PostActivityRequest) GetRoasterName() string {
+	if m != nil {
+		return m.RoasterName
+	}
+	return ""
+}
+
+func (m *PostActivityRequest) GetOrigin() string {
+	if m != nil {
+		return m.Origin
+	}
+	return ""
+}
+
+func (m *PostActivityRequest) GetNotes() string {
+	if m != nil {
+		return m.Notes
+	}
+	return ""
+}
+
+func (m *PostActivityRequest) GetPicture() []byte {
+	if m != nil {
+		return m.Picture
+	}
+	return nil
+}
+
+type PostActivityRequest_DrinkAmount struct {
+	N    int32                                        `protobuf:"varint,1,opt,name=N" json:"N,omitempty"`
+	Unit PostActivityRequest_DrinkAmount_CaffeineUnit `protobuf:"varint,2,opt,name=Unit,enum=PostActivityRequest_DrinkAmount_CaffeineUnit" json:"Unit,omitempty"`
+}
+
+func (m *PostActivityRequest_DrinkAmount) Reset()         { *m = PostActivityRequest_DrinkAmount{} }
+func (m *PostActivityRequest_DrinkAmount) String() string { return proto.CompactTextString(m) }
+func (*PostActivityRequest_DrinkAmount) ProtoMessage()    {}
+func (*PostActivityRequest_DrinkAmount) Descriptor() ([]byte, []int) {
+	return fileDescriptor0, []int{10, 0}
+}
+
+func (m *PostActivityRequest_DrinkAmount) GetN() int32 {
+	if m != nil {
+		return m.N
+	}
+	return 0
+}
+
+func (m *PostActivityRequest_DrinkAmount) GetUnit() PostActivityRequest_DrinkAmount_CaffeineUnit {
+	if m != nil {
+		return m.Unit
+	}
+	return PostActivityRequest_DrinkAmount_UNSPECIFIED
+}
+
+type PostActivityResponse struct {
+	ID int64 `protobuf:"varint,1,opt,name=ID" json:"ID,omitempty"`
+}
+
+func (m *PostActivityResponse) Reset()                    { *m = PostActivityResponse{} }
+func (m *PostActivityResponse) String() string            { return proto.CompactTextString(m) }
+func (*PostActivityResponse) ProtoMessage()               {}
+func (*PostActivityResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *PostActivityResponse) GetID() int64 {
+	if m != nil {
+		return m.ID
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*UserRequest)(nil), "UserRequest")
 	proto.RegisterType((*UserResponse)(nil), "UserResponse")
@@ -373,6 +532,10 @@ func init() {
 	proto.RegisterType((*RoasterResponse)(nil), "RoasterResponse")
 	proto.RegisterType((*RoastersRequest)(nil), "RoastersRequest")
 	proto.RegisterType((*RoastersResponse)(nil), "RoastersResponse")
+	proto.RegisterType((*PostActivityRequest)(nil), "PostActivityRequest")
+	proto.RegisterType((*PostActivityRequest_DrinkAmount)(nil), "PostActivityRequest.DrinkAmount")
+	proto.RegisterType((*PostActivityResponse)(nil), "PostActivityResponse")
+	proto.RegisterEnum("PostActivityRequest_DrinkAmount_CaffeineUnit", PostActivityRequest_DrinkAmount_CaffeineUnit_name, PostActivityRequest_DrinkAmount_CaffeineUnit_value)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -480,130 +643,194 @@ var _UserDirectory_serviceDesc = grpc.ServiceDesc{
 	Metadata: "coffeelog.proto",
 }
 
-// Client API for CoffeeDirectory service
+// Client API for RoasterDirectory service
 
-type CoffeeDirectoryClient interface {
-	Get(ctx context.Context, in *RoasterRequest, opts ...grpc.CallOption) (*RoasterResponse, error)
-	Create(ctx context.Context, in *RoasterCreateRequest, opts ...grpc.CallOption) (*Roaster, error)
-	List(ctx context.Context, in *RoastersRequest, opts ...grpc.CallOption) (*RoastersResponse, error)
+type RoasterDirectoryClient interface {
+	GetRoaster(ctx context.Context, in *RoasterRequest, opts ...grpc.CallOption) (*RoasterResponse, error)
+	CreateRoaster(ctx context.Context, in *RoasterCreateRequest, opts ...grpc.CallOption) (*Roaster, error)
+	ListRoaster(ctx context.Context, in *RoastersRequest, opts ...grpc.CallOption) (*RoastersResponse, error)
 }
 
-type coffeeDirectoryClient struct {
+type roasterDirectoryClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewCoffeeDirectoryClient(cc *grpc.ClientConn) CoffeeDirectoryClient {
-	return &coffeeDirectoryClient{cc}
+func NewRoasterDirectoryClient(cc *grpc.ClientConn) RoasterDirectoryClient {
+	return &roasterDirectoryClient{cc}
 }
 
-func (c *coffeeDirectoryClient) Get(ctx context.Context, in *RoasterRequest, opts ...grpc.CallOption) (*RoasterResponse, error) {
+func (c *roasterDirectoryClient) GetRoaster(ctx context.Context, in *RoasterRequest, opts ...grpc.CallOption) (*RoasterResponse, error) {
 	out := new(RoasterResponse)
-	err := grpc.Invoke(ctx, "/CoffeeDirectory/Get", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/RoasterDirectory/GetRoaster", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coffeeDirectoryClient) Create(ctx context.Context, in *RoasterCreateRequest, opts ...grpc.CallOption) (*Roaster, error) {
+func (c *roasterDirectoryClient) CreateRoaster(ctx context.Context, in *RoasterCreateRequest, opts ...grpc.CallOption) (*Roaster, error) {
 	out := new(Roaster)
-	err := grpc.Invoke(ctx, "/CoffeeDirectory/Create", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/RoasterDirectory/CreateRoaster", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *coffeeDirectoryClient) List(ctx context.Context, in *RoastersRequest, opts ...grpc.CallOption) (*RoastersResponse, error) {
+func (c *roasterDirectoryClient) ListRoaster(ctx context.Context, in *RoastersRequest, opts ...grpc.CallOption) (*RoastersResponse, error) {
 	out := new(RoastersResponse)
-	err := grpc.Invoke(ctx, "/CoffeeDirectory/List", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/RoasterDirectory/ListRoaster", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// Server API for CoffeeDirectory service
+// Server API for RoasterDirectory service
 
-type CoffeeDirectoryServer interface {
-	Get(context.Context, *RoasterRequest) (*RoasterResponse, error)
-	Create(context.Context, *RoasterCreateRequest) (*Roaster, error)
-	List(context.Context, *RoastersRequest) (*RoastersResponse, error)
+type RoasterDirectoryServer interface {
+	GetRoaster(context.Context, *RoasterRequest) (*RoasterResponse, error)
+	CreateRoaster(context.Context, *RoasterCreateRequest) (*Roaster, error)
+	ListRoaster(context.Context, *RoastersRequest) (*RoastersResponse, error)
 }
 
-func RegisterCoffeeDirectoryServer(s *grpc.Server, srv CoffeeDirectoryServer) {
-	s.RegisterService(&_CoffeeDirectory_serviceDesc, srv)
+func RegisterRoasterDirectoryServer(s *grpc.Server, srv RoasterDirectoryServer) {
+	s.RegisterService(&_RoasterDirectory_serviceDesc, srv)
 }
 
-func _CoffeeDirectory_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RoasterDirectory_GetRoaster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RoasterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoffeeDirectoryServer).Get(ctx, in)
+		return srv.(RoasterDirectoryServer).GetRoaster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/CoffeeDirectory/Get",
+		FullMethod: "/RoasterDirectory/GetRoaster",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoffeeDirectoryServer).Get(ctx, req.(*RoasterRequest))
+		return srv.(RoasterDirectoryServer).GetRoaster(ctx, req.(*RoasterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoffeeDirectory_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RoasterDirectory_CreateRoaster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RoasterCreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoffeeDirectoryServer).Create(ctx, in)
+		return srv.(RoasterDirectoryServer).CreateRoaster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/CoffeeDirectory/Create",
+		FullMethod: "/RoasterDirectory/CreateRoaster",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoffeeDirectoryServer).Create(ctx, req.(*RoasterCreateRequest))
+		return srv.(RoasterDirectoryServer).CreateRoaster(ctx, req.(*RoasterCreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoffeeDirectory_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RoasterDirectory_ListRoaster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RoastersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoffeeDirectoryServer).List(ctx, in)
+		return srv.(RoasterDirectoryServer).ListRoaster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/CoffeeDirectory/List",
+		FullMethod: "/RoasterDirectory/ListRoaster",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoffeeDirectoryServer).List(ctx, req.(*RoastersRequest))
+		return srv.(RoasterDirectoryServer).ListRoaster(ctx, req.(*RoastersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _CoffeeDirectory_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "CoffeeDirectory",
-	HandlerType: (*CoffeeDirectoryServer)(nil),
+var _RoasterDirectory_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "RoasterDirectory",
+	HandlerType: (*RoasterDirectoryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _CoffeeDirectory_Get_Handler,
+			MethodName: "GetRoaster",
+			Handler:    _RoasterDirectory_GetRoaster_Handler,
 		},
 		{
-			MethodName: "Create",
-			Handler:    _CoffeeDirectory_Create_Handler,
+			MethodName: "CreateRoaster",
+			Handler:    _RoasterDirectory_CreateRoaster_Handler,
 		},
 		{
-			MethodName: "List",
-			Handler:    _CoffeeDirectory_List_Handler,
+			MethodName: "ListRoaster",
+			Handler:    _RoasterDirectory_ListRoaster_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "coffeelog.proto",
+}
+
+// Client API for ActivityDirectory service
+
+type ActivityDirectoryClient interface {
+	PostActivity(ctx context.Context, in *PostActivityRequest, opts ...grpc.CallOption) (*PostActivityResponse, error)
+}
+
+type activityDirectoryClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewActivityDirectoryClient(cc *grpc.ClientConn) ActivityDirectoryClient {
+	return &activityDirectoryClient{cc}
+}
+
+func (c *activityDirectoryClient) PostActivity(ctx context.Context, in *PostActivityRequest, opts ...grpc.CallOption) (*PostActivityResponse, error) {
+	out := new(PostActivityResponse)
+	err := grpc.Invoke(ctx, "/ActivityDirectory/PostActivity", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Server API for ActivityDirectory service
+
+type ActivityDirectoryServer interface {
+	PostActivity(context.Context, *PostActivityRequest) (*PostActivityResponse, error)
+}
+
+func RegisterActivityDirectoryServer(s *grpc.Server, srv ActivityDirectoryServer) {
+	s.RegisterService(&_ActivityDirectory_serviceDesc, srv)
+}
+
+func _ActivityDirectory_PostActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostActivityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ActivityDirectoryServer).PostActivity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ActivityDirectory/PostActivity",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ActivityDirectoryServer).PostActivity(ctx, req.(*PostActivityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _ActivityDirectory_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "ActivityDirectory",
+	HandlerType: (*ActivityDirectoryServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PostActivity",
+			Handler:    _ActivityDirectory_PostActivity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -613,32 +840,50 @@ var _CoffeeDirectory_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("coffeelog.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 427 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x93, 0xdf, 0x6e, 0xd3, 0x30,
-	0x14, 0xc6, 0x93, 0x26, 0x5d, 0xb6, 0x93, 0x6d, 0xe9, 0xac, 0x22, 0x85, 0x48, 0xa0, 0xc8, 0x37,
-	0x54, 0x43, 0xf8, 0xa2, 0x48, 0xdc, 0xa2, 0xb1, 0x40, 0x36, 0x31, 0x21, 0x88, 0xb4, 0x07, 0xc8,
-	0xca, 0xd9, 0x88, 0x94, 0xd6, 0xc5, 0x76, 0x2e, 0xca, 0x9b, 0xf0, 0xb6, 0x28, 0x76, 0xfe, 0x35,
-	0xaa, 0x40, 0xe2, 0xd2, 0xe7, 0xc4, 0xbf, 0xcf, 0xe7, 0xfb, 0x4e, 0x20, 0x58, 0xf1, 0xc7, 0x47,
-	0xc4, 0x92, 0x3f, 0xb1, 0xad, 0xe0, 0x8a, 0xd3, 0x17, 0xe0, 0xdf, 0x4b, 0x14, 0x19, 0xfe, 0xac,
-	0x50, 0x2a, 0x72, 0x0e, 0x93, 0xdb, 0x24, 0xb4, 0x63, 0x7b, 0x71, 0x92, 0x4d, 0x6e, 0x13, 0xfa,
-	0x1e, 0x4e, 0x4d, 0x5b, 0x6e, 0xf9, 0x46, 0x22, 0x99, 0xc3, 0xf4, 0x13, 0xaf, 0x36, 0xdf, 0xf5,
-	0x27, 0xc7, 0x99, 0x39, 0x90, 0xe7, 0xe0, 0xd6, 0x5f, 0x85, 0x93, 0xd8, 0x5e, 0xf8, 0xcb, 0x29,
-	0xd3, 0x57, 0x74, 0x89, 0x66, 0xa6, 0x35, 0x06, 0x93, 0x18, 0xfc, 0xa4, 0x90, 0xdb, 0x32, 0xdf,
-	0x7d, 0xc9, 0xd7, 0xa8, 0x6f, 0x9e, 0x64, 0xc3, 0x12, 0x09, 0xc1, 0xfb, 0x5a, 0xac, 0x54, 0x25,
-	0x30, 0x74, 0x74, 0xb7, 0x3d, 0x52, 0x05, 0x90, 0x72, 0xfe, 0x54, 0xe2, 0x7f, 0x92, 0x5f, 0x02,
-	0x34, 0xa8, 0xfb, 0xec, 0xae, 0x81, 0x0f, 0x2a, 0xf5, 0x90, 0x1f, 0xd7, 0x79, 0x51, 0x86, 0xae,
-	0x6e, 0x99, 0x03, 0x4d, 0xc1, 0xcb, 0x78, 0x2e, 0xd5, 0x9e, 0xa4, 0xa3, 0x25, 0x09, 0xb8, 0x03,
-	0x2d, 0xf7, 0x1f, 0xcf, 0xbf, 0x82, 0xf3, 0x06, 0xd4, 0xba, 0x3e, 0xeb, 0x79, 0x37, 0x96, 0x26,
-	0xce, 0x87, 0xc4, 0x1b, 0xcb, 0x30, 0x3f, 0x78, 0x30, 0xfd, 0x56, 0xa1, 0xd8, 0xd1, 0x4b, 0x98,
-	0x37, 0x88, 0x6b, 0x81, 0xb9, 0xc2, 0x16, 0x74, 0xe0, 0x21, 0xf4, 0x33, 0x04, 0x9d, 0xdc, 0x5f,
-	0x53, 0xa4, 0xdd, 0x80, 0x4d, 0x90, 0xc7, 0xac, 0xbd, 0xd8, 0x36, 0xe8, 0x45, 0x07, 0x93, 0x8d,
-	0x26, 0x7d, 0x07, 0xb3, 0xbe, 0xd4, 0x08, 0xd4, 0x28, 0x94, 0x55, 0xa9, 0x64, 0x68, 0xc7, 0xce,
-	0x08, 0x65, 0x1a, 0xcb, 0x07, 0x38, 0xab, 0xf3, 0x4b, 0x0a, 0x81, 0x2b, 0xc5, 0xc5, 0x8e, 0xbc,
-	0x82, 0xe0, 0xaa, 0x52, 0x3f, 0xb8, 0x28, 0x7e, 0xa1, 0xc9, 0x97, 0xf8, 0xac, 0x0f, 0x3a, 0x32,
-	0x7b, 0x45, 0x2d, 0xb2, 0x00, 0x2f, 0x45, 0xa5, 0xc3, 0x3f, 0x65, 0x83, 0xed, 0x8d, 0xce, 0xd8,
-	0x70, 0x59, 0xa9, 0xb5, 0xfc, 0x6d, 0x43, 0x70, 0xad, 0x37, 0xbe, 0x97, 0xb9, 0x04, 0x27, 0x45,
-	0x45, 0x02, 0xb6, 0x1f, 0x42, 0x34, 0x63, 0x23, 0x9b, 0xa8, 0x45, 0x5e, 0xc3, 0x91, 0x31, 0x98,
-	0x3c, 0x63, 0x87, 0x0c, 0x8f, 0xba, 0xb9, 0xa8, 0x45, 0xde, 0x80, 0x7b, 0x57, 0xd4, 0x69, 0xb2,
-	0x91, 0x45, 0xd1, 0x05, 0x1b, 0x3b, 0x44, 0xad, 0x87, 0x23, 0xfd, 0x03, 0xbe, 0xfd, 0x13, 0x00,
-	0x00, 0xff, 0xff, 0x94, 0x33, 0x44, 0xf9, 0x93, 0x03, 0x00, 0x00,
+	// 712 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x54, 0xed, 0x6e, 0x12, 0x4d,
+	0x14, 0xde, 0xe5, 0x9b, 0xb3, 0xb4, 0xd0, 0x79, 0xe9, 0x9b, 0x75, 0x13, 0x95, 0xcc, 0x0f, 0x25,
+	0x26, 0x4e, 0x23, 0x9a, 0xc6, 0x3f, 0xc6, 0x20, 0x50, 0x20, 0x56, 0x5a, 0x97, 0x72, 0x01, 0x0b,
+	0x1d, 0xe8, 0x44, 0x60, 0x70, 0x77, 0x56, 0x83, 0x17, 0xe2, 0x6d, 0x78, 0x53, 0x5e, 0x88, 0xd9,
+	0x99, 0xd9, 0x65, 0x4b, 0x88, 0x4d, 0xfc, 0x79, 0xe6, 0x9c, 0xf3, 0x9c, 0x8f, 0xe7, 0x3c, 0x03,
+	0xd5, 0x19, 0x9f, 0xcf, 0x29, 0x5d, 0xf2, 0x05, 0xd9, 0xf8, 0x5c, 0x70, 0xe7, 0xe9, 0x82, 0xf3,
+	0xc5, 0x92, 0x9e, 0x49, 0x6b, 0x1a, 0xce, 0xcf, 0x04, 0x5b, 0xd1, 0x40, 0x78, 0xab, 0x8d, 0x0a,
+	0xc0, 0x8f, 0xc1, 0x9a, 0x04, 0xd4, 0x77, 0xe9, 0xd7, 0x90, 0x06, 0x02, 0x1d, 0x43, 0x66, 0xd8,
+	0xb5, 0xcd, 0x86, 0xd9, 0x2c, 0xbb, 0x99, 0x61, 0x17, 0xbf, 0x87, 0x8a, 0x72, 0x07, 0x1b, 0xbe,
+	0x0e, 0x28, 0xaa, 0x43, 0xfe, 0x82, 0x87, 0xeb, 0x5b, 0x19, 0x52, 0x72, 0x95, 0x81, 0x1e, 0x41,
+	0x2e, 0x8a, 0xb2, 0x33, 0x0d, 0xb3, 0x69, 0xb5, 0xf2, 0x44, 0xa6, 0xc8, 0x27, 0xec, 0x2a, 0xd7,
+	0x3e, 0x30, 0x6a, 0x80, 0xd5, 0x65, 0xc1, 0x66, 0xe9, 0x6d, 0x47, 0xde, 0x8a, 0xca, 0xcc, 0xb2,
+	0x9b, 0x7e, 0x42, 0x36, 0x14, 0xaf, 0xd9, 0x4c, 0x84, 0x3e, 0xb5, 0xb3, 0xd2, 0x1b, 0x9b, 0x58,
+	0x00, 0xf4, 0xe5, 0x58, 0xff, 0x88, 0xfc, 0x04, 0x40, 0x43, 0x4d, 0xdc, 0x4b, 0x0d, 0x9e, 0x7a,
+	0x89, 0x86, 0xec, 0xad, 0x3c, 0xb6, 0xb4, 0x73, 0xd2, 0xa5, 0x0c, 0xdc, 0x87, 0xa2, 0xcb, 0xbd,
+	0x40, 0xdc, 0x2b, 0x99, 0x95, 0x25, 0x11, 0xe4, 0x52, 0xb5, 0x72, 0x0f, 0xb4, 0xdf, 0x86, 0x63,
+	0x0d, 0x14, 0x6f, 0xbd, 0xb6, 0xc3, 0x1b, 0x18, 0x12, 0xb1, 0x9e, 0x46, 0x1c, 0x18, 0x0a, 0xf3,
+	0x43, 0x11, 0xf2, 0x9f, 0x43, 0xea, 0x6f, 0xf1, 0x0b, 0xa8, 0x6b, 0x88, 0x8e, 0x4f, 0x3d, 0x41,
+	0x63, 0xa0, 0x03, 0x8d, 0xe0, 0x8f, 0x50, 0x4d, 0xca, 0xfd, 0x95, 0x45, 0x9c, 0x0c, 0xa8, 0x89,
+	0x2c, 0x91, 0x38, 0x31, 0x76, 0xe0, 0x93, 0x04, 0x2c, 0xd0, 0x35, 0xf1, 0x39, 0xd4, 0x76, 0x4f,
+	0xba, 0x40, 0x04, 0x45, 0x83, 0x70, 0x29, 0x02, 0xdb, 0x6c, 0x64, 0xf7, 0xa0, 0x94, 0x03, 0xff,
+	0xce, 0xc2, 0x7f, 0xd7, 0x3c, 0x10, 0xed, 0x99, 0x60, 0xdf, 0x98, 0xd8, 0xc6, 0x33, 0xfc, 0x0f,
+	0x85, 0x88, 0xd7, 0x84, 0x53, 0x6d, 0x21, 0x07, 0x4a, 0x03, 0xbe, 0xa2, 0x53, 0x9f, 0x7e, 0x97,
+	0xfd, 0x95, 0xdc, 0xc4, 0x8e, 0x06, 0xea, 0xfa, 0x6c, 0xfd, 0xc5, 0x2e, 0x28, 0xc6, 0xa4, 0x11,
+	0x21, 0x7d, 0xa2, 0xe2, 0x8e, 0xdf, 0x6a, 0x06, 0xb4, 0x85, 0xde, 0x42, 0xa1, 0xbd, 0xe2, 0xe1,
+	0x5a, 0x48, 0x82, 0xad, 0x56, 0x83, 0x1c, 0xe8, 0x83, 0x48, 0x0c, 0x15, 0xe7, 0xea, 0x78, 0x44,
+	0x20, 0xd7, 0xf5, 0x04, 0xb5, 0xf3, 0x32, 0xcf, 0x21, 0x4a, 0x5d, 0x24, 0x56, 0x17, 0xb9, 0x89,
+	0xd5, 0xe5, 0xca, 0xb8, 0xe8, 0x16, 0xf5, 0xdc, 0x92, 0x96, 0x92, 0xba, 0xc5, 0xd4, 0x53, 0xd4,
+	0xe3, 0x95, 0xcf, 0x16, 0x6c, 0x6d, 0x17, 0x55, 0x8f, 0xca, 0x8a, 0x26, 0x1a, 0x71, 0x41, 0x03,
+	0xbb, 0xac, 0x26, 0x92, 0x46, 0xfa, 0xa8, 0xa0, 0x61, 0x36, 0x2b, 0xc9, 0x51, 0x39, 0x3f, 0x4d,
+	0xb0, 0x52, 0x1d, 0xa3, 0x0a, 0x98, 0x23, 0xb9, 0xc0, 0xbc, 0x6b, 0x8e, 0x50, 0x1b, 0x72, 0x93,
+	0x35, 0x13, 0x72, 0x6f, 0xc7, 0xad, 0x97, 0x0f, 0xcd, 0x4b, 0x3a, 0xde, 0x7c, 0x4e, 0xd9, 0x9a,
+	0x46, 0x49, 0xae, 0x4c, 0xc5, 0xe7, 0x50, 0x49, 0xbf, 0xa2, 0x2a, 0x58, 0x93, 0xd1, 0xf8, 0xba,
+	0xd7, 0x19, 0x5e, 0x0c, 0x7b, 0xdd, 0x9a, 0x81, 0xca, 0x90, 0x1f, 0x0f, 0xae, 0x6e, 0xc6, 0x35,
+	0x13, 0x01, 0x14, 0xae, 0x26, 0xa3, 0x4e, 0x6f, 0x5c, 0xcb, 0xe0, 0x67, 0x50, 0xbf, 0x5f, 0x4d,
+	0x9f, 0xc8, 0x9e, 0x86, 0x5a, 0x53, 0x38, 0x8a, 0x88, 0xee, 0x32, 0x9f, 0xce, 0x04, 0xf7, 0xb7,
+	0xe8, 0x39, 0x54, 0xdb, 0xa1, 0xb8, 0xe3, 0x3e, 0xfb, 0x41, 0x95, 0xdc, 0x91, 0x45, 0x76, 0xba,
+	0x77, 0xd4, 0x37, 0x83, 0x0d, 0xd4, 0x84, 0x62, 0x9f, 0x0a, 0xf9, 0x17, 0x54, 0x48, 0xea, 0x33,
+	0x73, 0x8e, 0x48, 0xfa, 0xef, 0xc2, 0x46, 0xeb, 0x97, 0x99, 0xdc, 0xea, 0xae, 0xce, 0x2b, 0x80,
+	0x3e, 0x15, 0xb1, 0xb4, 0xab, 0xe4, 0xbe, 0x36, 0x9d, 0x1a, 0xd9, 0x53, 0x0f, 0x36, 0x50, 0x0b,
+	0x8e, 0xb4, 0xee, 0x74, 0xd6, 0x29, 0x39, 0x24, 0x47, 0x27, 0xb9, 0x7a, 0x6c, 0xa0, 0x37, 0x60,
+	0x5d, 0xb2, 0x20, 0xa9, 0x93, 0xc0, 0xc6, 0x3a, 0x72, 0x4e, 0xc8, 0xbe, 0x8c, 0xb0, 0xd1, 0x72,
+	0xe1, 0x24, 0xde, 0xdc, 0xae, 0xe3, 0x77, 0x50, 0x49, 0xaf, 0x14, 0xd5, 0x0f, 0xf1, 0xe9, 0x9c,
+	0x92, 0x43, 0x7b, 0xc7, 0xc6, 0xb4, 0x20, 0xcf, 0xf5, 0xf5, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0x69, 0x4d, 0x63, 0x63, 0x2d, 0x06, 0x00, 0x00,
 }
