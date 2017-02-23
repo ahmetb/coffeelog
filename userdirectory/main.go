@@ -7,7 +7,7 @@ import (
 	"cloud.google.com/go/datastore"
 
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -15,9 +15,12 @@ const (
 	projectID = "ahmetb-starter" // TODO configurable
 )
 
+var log *logrus.Entry
+
 func main() {
-	log.SetLevel(log.DebugLevel)
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	log = logrus.WithField("service", "userdirectory")
 
 	ds, err := datastore.NewClient(context.TODO(), projectID)
 	if err != nil {

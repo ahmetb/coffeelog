@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	logrus "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -35,9 +35,12 @@ var (
 	coffeeDirectoryBackend = "127.0.0.1:8002" // TODO use service discovery
 )
 
+var log *logrus.Entry
+
 func main() {
-	log.SetLevel(log.DebugLevel)
-	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	log = logrus.WithField("service", "web")
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
 	// read oauth2 config
@@ -73,14 +76,14 @@ func main() {
 
 func logHandler(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		e := log.WithFields(log.Fields{
+		e := log.WithFields(logrus.Fields{
 			"method": r.Method,
 			"path":   r.URL.Path,
 		})
 		e.Debug("request accepted")
 		start := time.Now()
 		defer func() {
-			e.WithFields(log.Fields{
+			e.WithFields(logrus.Fields{
 				"elapsed": time.Now().Sub(start),
 			}).Debug("request completed")
 		}()
@@ -326,7 +329,7 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 		serverError(w, errors.Wrap(err, "failed to encode the response"))
 		return
 	}
-	log.WithFields(log.Fields{
+	logrus.WithFields(logrus.Fields{
 		"q":       q,
 		"matches": len(v)}).Debug("autocomplete response")
 }

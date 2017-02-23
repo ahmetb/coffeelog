@@ -4,7 +4,7 @@ import (
 	"cloud.google.com/go/datastore"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -57,7 +57,7 @@ func (c *coffeeDirectory) Create(ctx context.Context, req *pb.RoasterCreateReque
 		log.WithField("error", err).Error("failed to query the saved roaster")
 		return new(pb.Roaster), errors.New("failed to query the saved roaster")
 	}
-	log.WithFields(log.Fields{
+	log.WithFields(logrus.Fields{
 		"id":   r.GetRoaster().GetID(),
 		"name": r.GetRoaster().GetName()}).Debug("new roaster created")
 	return r.GetRoaster(), nil
