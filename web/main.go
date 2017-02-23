@@ -128,6 +128,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.Execute(w, map[string]interface{}{
 		"user":            user,
+		"drinks":          drinks,
 		"originCountries": originCountries}); err != nil {
 		log.Fatal(err)
 	}
@@ -387,5 +388,27 @@ var (
 		"Africa":   {"Kenya", "Ethiophia", "Nigeria", "Burundi", "Rwanda"},
 		"Americas": {"Colombia", "Venezuela", "Brazil", "Peru", "Cuba", "Ecuador", "Honduras", "Mexico", "Costa Rica"},
 		"Asia":     {"Indonesia", "India", "Vietnam"},
+	}
+
+	drinks = map[string]bool{
+		// espresso-based:
+		"Latte":       true,
+		"Mocha":       true,
+		"Breve":       true,
+		"Espresso":    true,
+		"Macchiato":   true,
+		"Cortado":     true,
+		"Americano":   true,
+		"Cappuccino":  true,
+		"Flat white":  true,
+		"Café Cubano": true,
+		"Affogato":    true,
+		"Ristretto":   true,
+		"Corretto":    true,
+		// non-espresso based:
+		"Brewed coffee": false,
+		"Iced coffee":   false,
+		"Decaf coffee":  false,
+		"Café au lait":  false, // ?
 	}
 )

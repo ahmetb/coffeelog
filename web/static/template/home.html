@@ -7,42 +7,37 @@
         $(document).ready(function() {
             $('select').material_select();
 
-            var drinks = {
-                    "Latte": null,
-                    "Espresso": null,
-                    "Macchiato": null,
-                    "Cortado": null,
-                    "Americano": null,
-                    "Cappuccino": null,
-                    "Flat white": null,
-                    "Brewed coffee": null,
-                    "Iced coffee": null,
-                    "Decaf coffee": null,
+            window.drinks = {
+                {{- range $k,$v := .drinks}}
+                "{{$k}}":{{$v}},
+                {{- end }}
             }
-
-            var nonEspressos = ["Brewed coffee", "Iced coffee", "Decaf coffee"];
 
             $('#drink').autocomplete({
                 minLength:0,
-                data: drinks});
+                data: {
+                    {{- range $k,$v := .drinks}}
+                    "{{$k}}":null,
+                    {{- end }}
+                }});
 
             // update amount slider based on drink
             $('#drink').on("val input change", function(){
-                if (nonEspressos.indexOf($(this).val()) != -1) {
-                    console.log($(this).val() + " = coffee");
-                    $("#amount").attr('min',6).attr('max',20).val(12);
-                    $("#amount-unit-label").text("oz.");
-                    $("#amount-unit").val("oz");
-                    $('.amount-info').show();
-                } else if ($(this).val() in drinks) {
+                if (!($(this).val() in drinks)) {
+                    console.log($(this).val() + " = unknown");
+                    $('.amount-info').hide();
+                } else if (drinks[$(this).val()] == true) {
                     console.log($(this).val() + " = espresso");
                     $("#amount").attr('min',1).attr('max',4).val(2);
                     $("#amount-unit-label").text("shots");
                     $("#amount-unit").val("shots");
                     $('.amount-info').show();
                 } else {
-                    console.log($(this).val() + " = unknown");
-                    $('.amount-info').hide();
+                    console.log($(this).val() + " = coffee");
+                    $("#amount").attr('min',6).attr('max',20).val(12);
+                    $("#amount-unit-label").text("oz.");
+                    $("#amount-unit").val("oz");
+                    $('.amount-info').show();
                 }
                 $("#amount").trigger('change');
             });
