@@ -26,3 +26,38 @@ message GoogleUser {
     string PictureURL = 3;
     string Email = 4;
 }
+
+
+service CoffeeDirectory {
+    rpc Get(RoasterRequest) returns (RoasterResponse) {}
+    rpc Create(RoasterCreateRequest) returns (Roaster) {}
+    rpc List(RoastersRequest) returns (RoastersResponse) {}
+}
+
+message Roaster {
+    int64 ID = 1;
+    string Name = 2;
+    string Picture = 3;
+}
+
+message RoasterRequest {
+    oneof Query {
+        int64 ID = 1;
+        string Name = 2;
+    }
+}
+
+message RoasterCreateRequest {
+    string Name = 2;
+}
+
+message RoasterResponse {
+    bool Found = 1;
+    Roaster Roaster = 2;
+}
+
+message RoastersRequest {}
+
+message RoastersResponse {
+    repeated Roaster Results = 1;
+}
