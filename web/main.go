@@ -13,6 +13,8 @@ import (
 
 	"google.golang.org/grpc"
 
+	"encoding/json"
+
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"
@@ -60,6 +62,7 @@ func main() {
 	r.HandleFunc("/logout", logHandler(logout)).Methods(http.MethodGet)
 	r.HandleFunc("/oauth2callback", logHandler(oauth2Callback)).Methods(http.MethodGet)
 	r.HandleFunc("/coffee", logHandler(logCoffee)).Methods(http.MethodPost)
+	r.HandleFunc("/autocomplete/roaster", logHandler(autocompleteRoaster)).Methods(http.MethodGet)
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000", // TODO make configurable
 		Handler: r}
@@ -284,6 +287,27 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		entry.WithField("size", len(b)).Debug("uploaded file is read")
+	}
+}
+
+func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("data")
+	if len(q) > 100 {
+		badRequest(w, errors.New("request too long"))
+		return
+	}
+
+	type result struct {
+		Value string `json:"value"`
+	}
+
+	// TODO actually query
+	v := []result{{"result:" + q}}
+	log.WithField("q", q).Debug("autocomplete query")
+
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		serverError(w, errors.Wrap(err, "failed to encode the response"))
+		return
 	}
 }
 

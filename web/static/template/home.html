@@ -19,22 +19,23 @@
                     "Flat white": null,
                     "Brewed coffee": null
                 }});
+
             $("#homebrew").change(function() {
                 (this.checked) ? $('.brew-info').show(): $('.brew-info').hide();
             });
 
-            jQuery('#roaster').autocomplete({
-                minLength:0,
-                data: {
-                    "Blue Bottle Coffee": null,
-                    "Espresso Vivace": null,
-                    "Stumptown Coffee": null,
-                    "Caffe Vita": null,
-                    "Caffe Ladro": null,
-                    "Elm Coffee Roasters": null,
-                    "Olympia Coffee Roasting Co.": null,
-                    "Ritual Coffee": null
-                }});
+            jQuery('#roaster').autocompleteajax({
+                minLength:1,
+                data:{},
+                ajax: {
+                    url: "/autocomplete/roaster",
+                    method: "get",
+                    dataType: "json",
+                },
+                callback: function(res) {
+                    console.log(res);
+                }
+            });
         });
         </script>
         <div class="record-form col s12 m9 offset-m2 l8 offset-l2">
