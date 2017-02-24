@@ -334,7 +334,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	}
 	log.WithField("id", resp.GetID()).Info("activity posted")
 
-	w.Header().Set("Location", "/")
+	w.Header().Set("Location", fmt.Sprintf("/a/%d", resp.GetID()))
 	w.WriteHeader(http.StatusFound)
 }
 
