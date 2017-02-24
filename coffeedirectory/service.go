@@ -154,7 +154,7 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 		return nil, errors.Wrap(err, "failed to parse date from proto")
 	}
 	v := activity{
-		UserID:      "", // TODO fix: use the user!!!
+		UserID:      req.GetUserID(),
 		Date:        ts,
 		LogDate:     time.Now(),
 		Drink:       req.GetDrink(),

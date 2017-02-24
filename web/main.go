@@ -92,35 +92,40 @@ func logHandler(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	var user *pb.User
-	if c, err := r.Cookie("user"); err == http.ErrNoCookie {
-		log.Debug("no auth cookie found")
-	} else {
-		log.Debug("auth cookie found")
-		var userID string
-		if err := sc.Decode("user", c.Value, &userID); err != nil {
-			badRequest(w, errors.Wrap(err, "failed to decode cookie"))
-			return
-		}
+type httpErrorWriter func(http.ResponseWriter, error)
 
-		// reach out to the user directory to save/retrieve user
-		cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
-		if err != nil {
-			serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-			return
-		}
-		defer cc.Close()
-		userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
-			&pb.UserRequest{ID: userID})
-		if err != nil {
-			serverError(w, errors.Wrap(err, "failed to retrieve the user"))
-			return
-		} else if !userResp.GetFound() {
-			badRequest(w, errors.New("unrecognized user"))
-			return
-		}
-		user = userResp.GetUser()
+func authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
+	c, err := r.Cookie("user")
+	if err == http.ErrNoCookie {
+		return nil, nil, nil
+	}
+	log.Debug("auth cookie found")
+	var userID string
+	if err := sc.Decode("user", c.Value, &userID); err != nil {
+		return nil, badRequest, errors.Wrap(err, "failed to decode cookie")
+	}
+
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		return nil, serverError, errors.Wrap(err, "failed to communicate the backend")
+	}
+	defer cc.Close()
+
+	userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
+		&pb.UserRequest{ID: userID})
+	if err != nil {
+		return nil, serverError, errors.Wrap(err, "failed to retrieve the user")
+	} else if !userResp.GetFound() {
+		return nil, badRequest, errors.New("unrecognized user")
+	}
+	return userResp.GetUser(), nil, nil
+}
+
+func home(w http.ResponseWriter, r *http.Request) {
+	user, errF, err := authUser(r)
+	if err != nil {
+		errF(w, err)
+		return
 	}
 
 	tmpl := template.Must(template.ParseFiles(
@@ -130,6 +135,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.Execute(w, map[string]interface{}{
 		"user":            user,
 		"drinks":          drinks,
+		"authenticated":   user != nil,
 		"originCountries": originCountries}); err != nil {
 		log.Fatal(err)
 	}
@@ -224,6 +230,10 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
+func unauthorized(w http.ResponseWriter, err error) {
+	errorCode(w, http.StatusUnauthorized, "unauthorized", err)
+}
+
 func badRequest(w http.ResponseWriter, err error) {
 	errorCode(w, http.StatusBadRequest, "bad request", err)
 }
@@ -233,6 +243,16 @@ func serverError(w http.ResponseWriter, err error) {
 }
 
 func logCoffee(w http.ResponseWriter, r *http.Request) {
+	user, errF, err := authUser(r)
+	if err != nil {
+		errF(w, err)
+		return
+	}
+	if user == nil {
+		badRequest(w, errors.New("required user to log in to post activity"))
+		return
+	}
+
 	if err := r.ParseMultipartForm(16 * 1024 * 1024); err != nil { // max 16 mb memory
 		badRequest(w, errors.Wrap(err, "failed to parse request"))
 		return
@@ -289,6 +309,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.WithFields(logrus.Fields{
+		"user":          user.GetID(),
 		"drink":         drink,
 		"homebrew":      homebrew,
 		"roasterName":   roasterName,
@@ -311,7 +332,8 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 		serverError(w, errors.Wrap(err, "cannot convert timestamp to proto"))
 	}
 	resp, err := pb.NewActivityDirectoryClient(cc).PostActivity(context.TODO(), &pb.PostActivityRequest{
-		Date: ts,
+		UserID: user.GetID(),
+		Date:   ts,
 		Amount: &pb.Activity_DrinkAmount{
 			N:    int32(amountN),
 			Unit: amountU,
