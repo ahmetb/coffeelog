@@ -38,6 +38,7 @@ service RoasterDirectory {
 
 service ActivityDirectory {
     rpc PostActivity(PostActivityRequest) returns (PostActivityResponse) {}
+    rpc GetActivity(ActivityRequest) returns (Activity) {}
 }
 
 message Roaster {
@@ -74,6 +75,42 @@ message PostActivityRequest {
     string Drink = 6;
     string Method = 3;
 
+    Activity.DrinkAmount Amount = 4;
+    google.protobuf.Timestamp Date = 5;
+    string RoasterName = 8;
+    string Origin = 7;
+    string Notes = 9;
+    File Picture = 10;
+
+    message File {
+        bytes Data = 1;
+        string Filename = 2;
+        string ContentType = 3;
+    }
+}
+
+message PostActivityResponse {
+    int64 ID = 1;
+}
+
+message Activity {
+    int64 ID = 1;
+    User User = 2;
+    bool Homebrew=12;
+    string Drink = 3;
+    string Method = 4;
+    DrinkAmount Amount = 5;
+    RoasterInfo Roaster = 6;
+    string Origin = 7;
+    string Notes = 8;
+    string PictureURL = 9;
+    google.protobuf.Timestamp Date = 10;
+    google.protobuf.Timestamp LogDate = 11;
+
+    message RoasterInfo {
+        int64 ID = 1;
+        string Name = 2;
+    }
     message DrinkAmount {
         int32 N = 1;
         enum CaffeineUnit {
@@ -83,20 +120,8 @@ message PostActivityRequest {
         }
         CaffeineUnit Unit = 2;
     }
-    DrinkAmount Amount = 4;
-    google.protobuf.Timestamp Date = 5;
-    string RoasterName = 8;
-    string Origin = 7;
-    string Notes = 9;
-
-    message File {
-        bytes Data = 1;
-        string Filename = 2;
-        string ContentType = 3;
-    }
-    File Picture = 10;
 }
 
-message PostActivityResponse {
+message ActivityRequest {
     int64 ID = 1;
 }

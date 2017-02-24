@@ -5,6 +5,8 @@ import (
 	"path"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/storage"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
@@ -183,9 +185,7 @@ func uploadPicture(ctx context.Context, filename, contentType string, b []byte) 
 	}
 	defer cl.Close()
 
-	// TODO generate random id
-	id := uuid.NewV4()
-	fn := fmt.Sprintf("%d/%02d/%s%s", t.Year(), t.Month(), id, path.Ext(filename))
+	fn := fmt.Sprintf("%d/%02d/%s%s", t.Year(), t.Month(), uuid.NewV4(), path.Ext(filename))
 	w := cl.Bucket(bucketPics).Object(fn).NewWriter(ctx)
 	w.ContentType = contentType
 	w.ACL = []storage.ACLRule{{Entity: storage.AllUsers, Role: storage.RoleReader}}
@@ -196,4 +196,53 @@ func uploadPicture(ctx context.Context, filename, contentType string, b []byte) 
 		"object": fn}).Debug("uploaded file")
 	url := fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketPics, fn)
 	return url, errors.Wrap(w.Close(), "failed to close object writer")
+}
+
+func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb.Activity, error) {
+	var v activity
+	if err := c.ds.Get(ctx, datastore.IDKey(kindActivity, req.GetID(), nil), &v); err == datastore.ErrNoSuchEntity {
+		return nil, errors.New("activity not found")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "error querying datastore for activity")
+	}
+
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to contact user directory")
+	}
+	defer cc.Close()
+	user, err := pb.NewUserDirectoryClient(cc).GetUser(ctx, &pb.UserRequest{ID: v.UserID})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to retrieve activity owner")
+	}
+	if !user.GetFound() {
+		return nil, errors.Wrap(err, "activity owner does not exist")
+	}
+
+	dateTs, err := ptypes.TimestampProto(v.Date)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse date from proto")
+	}
+	logDateTs, err := ptypes.TimestampProto(v.LogDate)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse date from proto")
+	}
+	return &pb.Activity{
+		ID:         v.K.ID,
+		User:       user.GetUser(),
+		Drink:      v.Drink,
+		Method:     v.Method,
+		Homebrew:   v.Homebrew,
+		Origin:     v.Origin,
+		PictureURL: v.PictureURL,
+		Roaster: &pb.Activity_RoasterInfo{
+			ID:   v.RoasterID,
+			Name: v.RoasterName},
+		Date:    dateTs,
+		LogDate: logDateTs,
+		Amount: &pb.Activity_DrinkAmount{
+			N:    v.Amount,
+			Unit: pb.Activity_DrinkAmount_CaffeineUnit(pb.Activity_DrinkAmount_CaffeineUnit_value[v.AmountUnit])},
+		Notes: v.Notes,
+	}, nil
 }
