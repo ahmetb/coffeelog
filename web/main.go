@@ -46,7 +46,7 @@ func main() {
 	// read oauth2 config
 	env := "GOOGLE_OAUTH2_CONFIG"
 	if os.Getenv(env) == "" {
-		panic(errors.New(env + " is not set"))
+		log.Fatalf("%s is not set", env)
 	}
 	b, err := ioutil.ReadFile(os.Getenv(env))
 	if err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net"
+	"os"
 
 	"cloud.google.com/go/datastore"
 
@@ -21,6 +22,10 @@ func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	log = logrus.WithField("service", "userdirectory")
+
+	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
+		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
+	}
 
 	ds, err := datastore.NewClient(context.TODO(), projectID)
 	if err != nil {
