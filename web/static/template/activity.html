@@ -1,0 +1,55 @@
+{{define "title"}}
+    {{- .activity.User.DisplayName}}'s activity
+{{- end}}
+
+{{define "body"}}
+<div class="container">
+    <div class="card">
+        <div class="card-image">
+            <img src="{{.activity.PictureURL}}">
+            <span class="card-title">{{.activity.Drink}}
+                (
+                    <!-- TODO templatize -->
+                    {{.activity.Amount.N}}
+                    {{ if eq (print .activity.Amount.Unit) "OUNCES" -}}
+                        oz
+                    {{- else if (print .activity.Amount.Unit) "SHOTS" -}}
+                        shots
+                    {{- else -}}
+                        ??
+                    {{- end -}}
+                )
+            </span>
+        </div>
+
+        <div class="card-content">
+            <div class="row valign-wrapper">
+                <div class="col s12">
+                    <img src="{{.activity.User.Picture}}" class="circle responsive-img valign">
+                    <b class="valign">{{.activity.User.DisplayName}}</b>
+                </div>
+            </div>
+            
+            <p>
+            {{ if or .activity.Roaster .activity.Origin}}
+                Beans from {{if .activity.Roaster}}
+                    <a href="/roaster/{{.activity.Roaster.ID}}">
+                        {{.activity.Roaster.Name}}
+                    </a>
+                    {{ if .activity.Origin }}
+                        ({{.activity.Origin}})
+                    {{ end }}
+                {{else}}
+                    {{.activity.Origin}}
+                {{end}}
+            {{end}}
+            </p>
+            {{ if .activity.Notes }}
+            <p>
+                <blockquote>{{.activity.Notes}}</blockquote>
+            </p>
+            {{ end }}
+        </div>
+    </div>
+</div>
+{{end}}

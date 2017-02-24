@@ -66,6 +66,7 @@ func main() {
 	r.HandleFunc("/logout", logHandler(logout)).Methods(http.MethodGet)
 	r.HandleFunc("/oauth2callback", logHandler(oauth2Callback)).Methods(http.MethodGet)
 	r.HandleFunc("/coffee", logHandler(logCoffee)).Methods(http.MethodPost)
+	r.HandleFunc("/a/{id:[0-9]+}", logHandler(activity)).Methods(http.MethodGet)
 	r.HandleFunc("/autocomplete/roaster", logHandler(autocompleteRoaster)).Methods(http.MethodGet)
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000", // TODO make configurable
@@ -277,14 +278,14 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	)
 
 	amountN, _ := strconv.ParseInt(amount, 10, 32)
-	var amountU pb.PostActivityRequest_DrinkAmount_CaffeineUnit
+	var amountU pb.Activity_DrinkAmount_CaffeineUnit
 	switch amountUnitStr {
 	case "oz":
-		amountU = pb.PostActivityRequest_DrinkAmount_OUNCES
+		amountU = pb.Activity_DrinkAmount_OUNCES
 	case "shots":
-		amountU = pb.PostActivityRequest_DrinkAmount_SHOTS
+		amountU = pb.Activity_DrinkAmount_SHOTS
 	default:
-		amountU = pb.PostActivityRequest_DrinkAmount_UNSPECIFIED
+		amountU = pb.Activity_DrinkAmount_UNSPECIFIED
 	}
 
 	log.WithFields(logrus.Fields{
@@ -311,7 +312,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := pb.NewActivityDirectoryClient(cc).PostActivity(context.TODO(), &pb.PostActivityRequest{
 		Date: ts,
-		Amount: &pb.PostActivityRequest_DrinkAmount{
+		Amount: &pb.Activity_DrinkAmount{
 			N:    int32(amountN),
 			Unit: amountU,
 		},
@@ -375,6 +376,41 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 	logrus.WithFields(logrus.Fields{
 		"q":       q,
 		"matches": len(v)}).Debug("autocomplete response")
+}
+
+func activity(w http.ResponseWriter, r *http.Request) {
+	idS := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idS, 10, 64)
+	if err != nil {
+		badRequest(w, errors.Wrap(err, "bad activity id"))
+		return
+	}
+
+	e := log.WithField("id", id)
+	e.Debug("activity requested")
+
+	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
+		return
+	}
+	defer cc.Close()
+
+	ar, err := pb.NewActivityDirectoryClient(cc).GetActivity(context.TODO(), &pb.ActivityRequest{ID: id})
+	if err != nil {
+		serverError(w, errors.Wrap(err, "cannot get activity"))
+		return
+	}
+	e.WithField("user.id", ar.GetUser().GetID()).Debug("retrieved activity")
+
+	tmpl := template.Must(template.ParseFiles(
+		filepath.Join("static", "template", "layout.html"),
+		filepath.Join("static", "template", "activity.html")))
+
+	if err := tmpl.Execute(w, map[string]interface{}{
+		"activity": ar}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func errorCode(w http.ResponseWriter, code int, msg string, err error) {
