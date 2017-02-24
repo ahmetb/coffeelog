@@ -5,8 +5,11 @@
 {{define "body"}}
 <div class="container">
     <div class="card">
-        <div class="card-image">
-            <img src="{{.activity.PictureURL}}">
+        <div class="card-image" style="height: 500px;">
+            <img src="{{.activity.PictureURL}}" class="responsive-img" style='object-fit:cover;
+            object-position: center;
+            height: 100%;
+            width:100%'>
             <span class="card-title">{{.activity.Drink}}
                 (
                     <!-- TODO templatize -->
