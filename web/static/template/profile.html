@@ -9,11 +9,12 @@
         <div class="col s12 m8 offset-m2 l6 offset-l3">
             <div class="row valign-wrapper">
                 <div class="col s2">
-                    <img src="{{.user.Picture}}" alt="" class="circle responsive-img">
+                    <img src="{{.user.Picture}}" alt="" class="circle responsive-img"
+                        style="max-height:60px;">
                 </div>
                 <div class="col s10">
                     <span class="black-text">
-                    <h5>Caffeine history of<br/><b>{{.user.DisplayName}}</b></h5>
+                    Caffeine history </br><b>{{.user.DisplayName}}</b>
                     </span>
                 </div>
             </div>
@@ -22,8 +23,6 @@
 
     <div class="row">
         <div class="col">
-            {{$method_icons := .methods}}
-            {{$drinks := .drinks }}
             {{ range .activities }}
                 <div class="row activity-row">
                     <div class="col s12 m8 offset-m2 l6 offset-l3">
@@ -40,9 +39,8 @@
                                     </div>
                                     {{ end }}
                                     <div class="card-content">
-
                                         {{ if .Method }}
-                                            {{ $icon := index $method_icons .Method }}
+                                            {{ $icon := index $.methods .Method }}
                                             {{ if $icon }}
                                                 <img src="/static/img/methods/{{$icon}}"
                                                         class="responsive-img left"

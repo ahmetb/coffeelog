@@ -70,7 +70,7 @@ func main() {
 	r.HandleFunc("/u/{id:[0-9]+}", logHandler(userProfile)).Methods(http.MethodGet)
 	r.HandleFunc("/autocomplete/roaster", logHandler(autocompleteRoaster)).Methods(http.MethodGet)
 	srv := http.Server{
-		Addr:    "127.0.0.1:8000", // TODO make configurable
+		Addr:    "0.0.0.0:8000", // TODO make configurable
 		Handler: r}
 	log.WithField("addr", srv.Addr).Info("starting to listen on http")
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
@@ -453,6 +453,12 @@ func activity(w http.ResponseWriter, r *http.Request) {
 func userProfile(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
+	me, ef, err := authUser(r)
+	if err != nil {
+		ef(w, err)
+		return
+	}
+
 	userResp, err := getUser(userID)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to look up the user"))
@@ -481,6 +487,7 @@ func userProfile(w http.ResponseWriter, r *http.Request) {
 		filepath.Join("static", "template", "layout.html"),
 		filepath.Join("static", "template", "profile.html")))
 	if err := tmpl.Execute(w, map[string]interface{}{
+		"me":         me,
 		"user":       userResp.GetUser(),
 		"activities": ar.GetActivities(),
 		"methods":    methodIcons,
