@@ -4,21 +4,95 @@
 
 {{define "body"}}
 <div class="container">
+    <br/>
     <div class="row">
         <div class="col s12 m8 offset-m2 l6 offset-l3">
-            <div class="card-panel grey lighten-5 z-depth-1">
-                <div class="row valign-wrapper">
+            <div class="row valign-wrapper">
                 <div class="col s2">
                     <img src="{{.user.Picture}}" alt="" class="circle responsive-img">
                 </div>
                 <div class="col s10">
                     <span class="black-text">
-                    Profile of <b>{{.user.DisplayName}}</b>
+                    <h5>Caffeine history of<br/><b>{{.user.DisplayName}}</b></h5>
                     </span>
-                </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="row">
+        <div class="col">
+            {{$method_icons := .methods}}
+            {{$drinks := .drinks }}
+            {{ range .activities }}
+                <div class="row activity-row">
+                    <div class="col s12 m8 offset-m2 l6 offset-l3">
+                                <div class="card">
+                                    {{ if .PictureURL }}
+                                    <div class="card-image">
+                                        <img src="{{.PictureURL}}"
+                                            class="materialboxed"
+                                            style='object-fit: cover;
+                                                object-position: center;
+                                                max-height: 300px;
+                                                height: 100%;
+                                                width:100%'/>
+                                    </div>
+                                    {{ end }}
+                                    <div class="card-content">
+
+                                        {{ if .Method }}
+                                            {{ $icon := index $method_icons .Method }}
+                                            {{ if $icon }}
+                                                <img src="/static/img/methods/{{$icon}}"
+                                                        class="responsive-img left"
+                                                        style="max-height: 50px;"
+                                                        alt="{{.Method}}"
+                                                        title="{{.Method}}"/>
+                                            {{end}}
+                                        {{ end }}
+
+                                        {{ if.Homebrew }}Brewed{{ end }}
+
+                                        {{ if .Amount.N }}
+                                            {{.Amount.N}}
+
+                                            {{ if eq (print .Amount.Unit) "OUNCES" -}}
+                                                oz of
+                                            {{- else if (print .Amount.Unit) "SHOTS" -}}
+                                                shots of
+                                            {{- else -}}
+                                                ??
+                                            {{- end }}
+
+                                        {{ end -}}
+
+                                        <b>{{.Drink}}</b>
+
+                                        {{if or .Origin .Roaster -}}
+                                        (
+                                            {{- if .Origin -}}{{- .Origin }}{{- end -}}
+                                            {{- if .Roaster }}
+                                                from {{ .Roaster.Name }}
+                                            {{- end -}}
+                                        )
+                                        {{- end}}
+
+                                        {{- if .Method}}
+                                            with {{.Method}} method
+                                        {{- end -}}
+                                        .
+
+                                        {{if .Notes}}
+                                        <blockquote style="font-style:italic">“{{.Notes}}”</blockquote>
+                                        {{ end }}
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    </div>
 </div>
+
 {{- end}}

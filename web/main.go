@@ -142,7 +142,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.Execute(w, map[string]interface{}{
 		"me":              user,
 		"drinks":          drinks,
-		"methods":         methods,
+		"methods":         methodsList,
 		"authenticated":   user != nil,
 		"originCountries": originCountries}); err != nil {
 		log.Fatal(err)
@@ -301,7 +301,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 		amountUnitStr = r.FormValue("amount_unit")
 		roasterName   = r.FormValue("roaster")
 		origin        = r.FormValue("origin")
-		method        = r.FormValue("method")
+		method        = r.FormValue("brew-method")
 		notes         = r.FormValue("notes")
 	)
 
@@ -364,7 +364,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	}
 	log.WithField("id", resp.GetID()).Info("activity posted")
 
-	w.Header().Set("Location", fmt.Sprintf("/a/%d", resp.GetID()))
+	w.Header().Set("Location", fmt.Sprintf("/u/%d", user.GetID()))
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -409,6 +409,12 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 }
 
 func activity(w http.ResponseWriter, r *http.Request) {
+	user, ef, err := authUser(r)
+	if err != nil {
+		ef(w, err)
+		return
+	}
+
 	idS := mux.Vars(r)["id"]
 	id, err := strconv.ParseInt(idS, 10, 64)
 	if err != nil {
@@ -438,7 +444,8 @@ func activity(w http.ResponseWriter, r *http.Request) {
 		filepath.Join("static", "template", "activity.html")))
 
 	if err := tmpl.Execute(w, map[string]interface{}{
-		"activity": ar}); err != nil {
+		"activity": ar,
+		"me":       user}); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -475,7 +482,9 @@ func userProfile(w http.ResponseWriter, r *http.Request) {
 		filepath.Join("static", "template", "profile.html")))
 	if err := tmpl.Execute(w, map[string]interface{}{
 		"user":       userResp.GetUser(),
-		"activities": ar.GetActivities()}); err != nil {
+		"activities": ar.GetActivities(),
+		"methods":    methodIcons,
+		"drinks":     drinks}); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -495,37 +504,49 @@ var (
 
 	drinks = map[string]bool{
 		// espresso-based:
-		"Latte":       true,
-		"Mocha":       true,
-		"Breve":       true,
-		"Espresso":    true,
-		"Macchiato":   true,
-		"Cortado":     true,
-		"Americano":   true,
-		"Cappuccino":  true,
-		"Flat white":  true,
-		"Café Cubano": true,
-		"Affogato":    true,
-		"Ristretto":   true,
-		"Corretto":    true,
+		"Latte":          true,
+		"Mocha":          true,
+		"Breve":          true,
+		"Espresso":       true,
+		"Macchiato":      true,
+		"Cortado":        true,
+		"Americano":      true,
+		"Cappuccino":     true,
+		"Flat white":     true,
+		"Café Cubano":    true,
+		"Affogato":       true,
+		"Ristretto":      true,
+		"Corretto":       true,
+		"Turkish coffee": true,
 		// non-espresso based:
-		"Brewed coffee": false,
-		"Cold brew":     false,
-		"Iced coffee":   false,
-		"Decaf coffee":  false,
-		"Café au lait":  false, // ?
+		"Coffee":       false,
+		"Cold brew":    false,
+		"Iced coffee":  false,
+		"Decaf coffee": false,
+		"Café au lait": false, // ?
 	}
 
 	// TODO fix these with proper attribution to designers.
-	methods = []struct{ Name, Icon string }{
-		{"Espresso", "espresso-machine.png"},
-		{"Chemex", "chemex.png"},
-		{"Aeropress", "aeropress.png"},
-		{"Hario V60", "v60.png"},
-		{"French press", "french-press.png"},
-		{"Dripper", "dripper.png"},
-		{"Kyoto Dripper", "kyoto.png"},
-		{"Moka Pot", "moka.png"},
-		{"Turkish coffee", "turkish.png"},
+	methodIcons = map[string]string{
+		"Espresso":       "espresso-machine.png",
+		"Chemex":         "chemex.png",
+		"Aeropress":      "aeropress.png",
+		"Hario V60":      "v60.png",
+		"French press":   "french-press.png",
+		"Dripper":        "dripper.png",
+		"Kyoto Dripper":  "kyoto.png",
+		"Moka Pot":       "moka.png",
+		"Turkish coffee": "turkish.png",
+	}
+	methodsList = []struct{ Name, Icon string }{
+		{"Espresso", methodIcons["Espresso"]},
+		{"Chemex", methodIcons["Chemex"]},
+		{"Aeropress", methodIcons["Aeropress"]},
+		{"Hario V60", methodIcons["Hario V60"]},
+		{"French press", methodIcons["French press"]},
+		{"Dripper", methodIcons["Dripper"]},
+		{"Kyoto Dripper", methodIcons["Kyoto Dripper"]},
+		{"Moka Pot", methodIcons["Moka Pot"]},
+		{"Turkish coffee", methodIcons["Turkish coffee"]},
 	}
 )

@@ -61,7 +61,7 @@
                 }
             });
 
-            $('#amount').on("change blur", (function(){ $('#amount-val').text($(this).val()); }));
+            $('#amount').on("change blur input", (function(){ $('#amount-val').text($(this).val()); }));
             $('#amount').val("2").trigger("change");
             $('#drink').trigger("change"); // to show the amount-info
 
