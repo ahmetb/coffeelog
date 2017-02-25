@@ -34,7 +34,7 @@ func (u *userDirectory) AuthorizeGoogle(ctx context.Context, goog *pb.GoogleUser
 	var v []account
 	if _, err := u.ds.GetAll(ctx, q, &v); err != nil {
 		log.WithField("error", err).Error("failed to query the datastore")
-		return nil, errors.New("failed to query")
+		return nil, errors.Wrap(err, "failed to query")
 	}
 
 	var id string
@@ -90,7 +90,7 @@ func (u *userDirectory) GetUser(ctx context.Context, req *pb.UserRequest) (*pb.U
 		return &pb.UserResponse{Found: false}, nil
 	} else if err != nil {
 		log.WithField("error", err).Error("failed to query the datastore")
-		return nil, errors.New("failed to query")
+		return nil, errors.Wrap(err, "failed to query")
 	}
 	log.Debug("found user")
 	return &pb.UserResponse{

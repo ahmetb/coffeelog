@@ -67,6 +67,7 @@ func main() {
 	r.HandleFunc("/oauth2callback", logHandler(oauth2Callback)).Methods(http.MethodGet)
 	r.HandleFunc("/coffee", logHandler(logCoffee)).Methods(http.MethodPost)
 	r.HandleFunc("/a/{id:[0-9]+}", logHandler(activity)).Methods(http.MethodGet)
+	r.HandleFunc("/u/{id:[0-9]+}", logHandler(userProfile)).Methods(http.MethodGet)
 	r.HandleFunc("/autocomplete/roaster", logHandler(autocompleteRoaster)).Methods(http.MethodGet)
 	srv := http.Server{
 		Addr:    "127.0.0.1:8000", // TODO make configurable
@@ -94,6 +95,18 @@ func logHandler(h http.HandlerFunc) http.HandlerFunc {
 
 type httpErrorWriter func(http.ResponseWriter, error)
 
+func getUser(id string) (*pb.UserResponse, error) {
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to communicate the backend")
+	}
+	defer cc.Close()
+
+	userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
+		&pb.UserRequest{ID: id})
+	return userResp, err
+}
+
 func authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
 	c, err := r.Cookie("user")
 	if err == http.ErrNoCookie {
@@ -105,16 +118,9 @@ func authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err erro
 		return nil, badRequest, errors.Wrap(err, "failed to decode cookie")
 	}
 
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	userResp, err := getUser(userID)
 	if err != nil {
-		return nil, serverError, errors.Wrap(err, "failed to communicate the backend")
-	}
-	defer cc.Close()
-
-	userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
-		&pb.UserRequest{ID: userID})
-	if err != nil {
-		return nil, serverError, errors.Wrap(err, "failed to retrieve the user")
+		return nil, serverError, errors.Wrap(err, "failed to look up the user")
 	} else if !userResp.GetFound() {
 		return nil, badRequest, errors.New("unrecognized user")
 	}
@@ -133,7 +139,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 		filepath.Join("static", "template", "home.html")))
 
 	if err := tmpl.Execute(w, map[string]interface{}{
-		"user":            user,
+		"me":              user,
 		"drinks":          drinks,
 		"authenticated":   user != nil,
 		"originCountries": originCountries}); err != nil {
@@ -378,7 +384,7 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cc.Close()
 
-	resp, err := pb.NewRoasterDirectoryClient(cc).ListRoaster(context.TODO(), new(pb.RoastersRequest))
+	resp, err := pb.NewRoasterDirectoryClient(cc).ListRoasters(context.TODO(), new(pb.RoastersRequest))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to query the roasters"))
 		return
@@ -411,13 +417,13 @@ func activity(w http.ResponseWriter, r *http.Request) {
 	e := log.WithField("id", id)
 	e.Debug("activity requested")
 
+	// TODO eliminate duplication
 	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
 		return
 	}
 	defer cc.Close()
-
 	ar, err := pb.NewActivityDirectoryClient(cc).GetActivity(context.TODO(), &pb.ActivityRequest{ID: id})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "cannot get activity"))
@@ -431,6 +437,43 @@ func activity(w http.ResponseWriter, r *http.Request) {
 
 	if err := tmpl.Execute(w, map[string]interface{}{
 		"activity": ar}); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func userProfile(w http.ResponseWriter, r *http.Request) {
+	userID := mux.Vars(r)["id"]
+
+	userResp, err := getUser(userID)
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to look up the user"))
+		return
+	} else if !userResp.GetFound() {
+		errorCode(w, http.StatusNotFound, "not found", errors.New("user not found"))
+		return
+	}
+
+	// TODO eliminate duplicatio
+	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
+		return
+	}
+	defer cc.Close()
+
+	ar, err := pb.NewActivityDirectoryClient(cc).GetUserActivities(context.TODO(),
+		&pb.UserActivitiesRequest{UserID: userID})
+	if err != nil {
+		serverError(w, errors.Wrap(err, "failed to query activities"))
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles(
+		filepath.Join("static", "template", "layout.html"),
+		filepath.Join("static", "template", "profile.html")))
+	if err := tmpl.Execute(w, map[string]interface{}{
+		"user":       userResp.GetUser(),
+		"activities": ar.GetActivities()}); err != nil {
 		log.Fatal(err)
 	}
 }

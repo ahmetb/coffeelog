@@ -61,6 +61,35 @@ type activity struct {
 	PictureURL  string         `datastore:"PictureURL,noindex"`
 }
 
+func (v *activity) ToProto(u *pb.User) (*pb.Activity, error) {
+	dateTs, err := ptypes.TimestampProto(v.Date)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse date from proto")
+	}
+	logDateTs, err := ptypes.TimestampProto(v.LogDate)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse date from proto")
+	}
+	return &pb.Activity{
+		ID:         v.K.ID,
+		User:       u,
+		Drink:      v.Drink,
+		Method:     v.Method,
+		Homebrew:   v.Homebrew,
+		Origin:     v.Origin,
+		PictureURL: v.PictureURL,
+		Roaster: &pb.Activity_RoasterInfo{
+			ID:   v.RoasterID,
+			Name: v.RoasterName},
+		Date:    dateTs,
+		LogDate: logDateTs,
+		Amount: &pb.Activity_DrinkAmount{
+			N:    v.Amount,
+			Unit: pb.Activity_DrinkAmount_CaffeineUnit(pb.Activity_DrinkAmount_CaffeineUnit_value[v.AmountUnit])},
+		Notes: v.Notes,
+	}, nil
+}
+
 func (c *service) GetRoaster(ctx context.Context, req *pb.RoasterRequest) (*pb.RoasterResponse, error) {
 	e := log.WithField("q.id", req.GetID()).WithField("q.name", req.GetName())
 	e.Debug("querying roaster")
@@ -100,7 +129,7 @@ func (c *service) CreateRoaster(ctx context.Context, req *pb.RoasterCreateReques
 	return r.GetRoaster(), nil
 }
 
-func (c *service) ListRoaster(ctx context.Context, _ *pb.RoastersRequest) (*pb.RoastersResponse, error) {
+func (c *service) ListRoasters(ctx context.Context, _ *pb.RoastersRequest) (*pb.RoastersResponse, error) {
 	resp := new(pb.RoastersResponse)
 
 	var data []roaster
@@ -206,6 +235,7 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 		return nil, errors.Wrap(err, "error querying datastore for activity")
 	}
 
+	// TODO eliminate duplication
 	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to contact user directory")
@@ -219,30 +249,39 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 		return nil, errors.Wrap(err, "activity owner does not exist")
 	}
 
-	dateTs, err := ptypes.TimestampProto(v.Date)
+	activity, err := v.ToProto(user.GetUser())
+	return activity, errors.Wrap(err, "activity proto conversion failed")
+}
+
+func (c *service) GetUserActivities(ctx context.Context, req *pb.UserActivitiesRequest) (*pb.UserActivitiesResponse, error) {
+	log.WithField("user.id", req.GetUserID()).Debug("querying datastore for activities")
+
+	// TODO eliminate duplication
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse date from proto")
+		return nil, errors.Wrap(err, "failed to contact user directory")
 	}
-	logDateTs, err := ptypes.TimestampProto(v.LogDate)
+	defer cc.Close()
+	user, err := pb.NewUserDirectoryClient(cc).GetUser(ctx, &pb.UserRequest{ID: req.GetUserID()})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse date from proto")
+		return nil, errors.Wrap(err, "failed to retrieve user profile")
 	}
-	return &pb.Activity{
-		ID:         v.K.ID,
-		User:       user.GetUser(),
-		Drink:      v.Drink,
-		Method:     v.Method,
-		Homebrew:   v.Homebrew,
-		Origin:     v.Origin,
-		PictureURL: v.PictureURL,
-		Roaster: &pb.Activity_RoasterInfo{
-			ID:   v.RoasterID,
-			Name: v.RoasterName},
-		Date:    dateTs,
-		LogDate: logDateTs,
-		Amount: &pb.Activity_DrinkAmount{
-			N:    v.Amount,
-			Unit: pb.Activity_DrinkAmount_CaffeineUnit(pb.Activity_DrinkAmount_CaffeineUnit_value[v.AmountUnit])},
-		Notes: v.Notes,
-	}, nil
+	if !user.GetFound() {
+		return nil, errors.Wrap(err, "user does not exist")
+	}
+
+	var v []activity
+	if _, err := c.ds.GetAll(ctx, datastore.NewQuery(kindActivity).Filter("UserID =", req.GetUserID()).Order("-Date"), &v); err != nil {
+		return nil, errors.Wrap(err, "failed to query datastore for user activities")
+	}
+
+	var res []*pb.Activity
+	for _, a := range v {
+		aa, err := a.ToProto(user.GetUser())
+		if err != nil {
+			return nil, errors.Wrap(err, "proto conversion failed on one of the activities")
+		}
+		res = append(res, aa)
+	}
+	return &pb.UserActivitiesResponse{Activities: res}, nil
 }

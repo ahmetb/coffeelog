@@ -33,12 +33,13 @@ message GoogleUser {
 service RoasterDirectory {
     rpc GetRoaster(RoasterRequest) returns (RoasterResponse) {}
     rpc CreateRoaster(RoasterCreateRequest) returns (Roaster) {}
-    rpc ListRoaster(RoastersRequest) returns (RoastersResponse) {}
+    rpc ListRoasters(RoastersRequest) returns (RoastersResponse) {}
 }
 
 service ActivityDirectory {
     rpc PostActivity(PostActivityRequest) returns (PostActivityResponse) {}
     rpc GetActivity(ActivityRequest) returns (Activity) {}
+    rpc GetUserActivities(UserActivitiesRequest) returns (UserActivitiesResponse) {}
 }
 
 message Roaster {
@@ -124,4 +125,12 @@ message Activity {
 
 message ActivityRequest {
     int64 ID = 1;
+}
+
+message UserActivitiesRequest {
+    string UserID = 1;
+}
+
+message UserActivitiesResponse {
+    repeated Activity Activities = 1;
 }

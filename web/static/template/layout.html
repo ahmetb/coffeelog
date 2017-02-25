@@ -15,9 +15,9 @@
     <div class="nav-wrapper">
       <a href="#" class="brand-logo center">Coffee Log</a>
       <ul class="right hide-on-med-and-down valign-wrapper">
-        {{if .user}}
+        {{if .me}}
           <li><a href="/logout">Logout</a></li>
-          <li><a href="#"><div class="valign-wrapper"><img src="{{.user.Picture}}" alt="" class="circle responsive-img"/></div></a></li>
+          <li><a href="/u/{{.me.ID}}"><div class="valign-wrapper"><img src="{{.me.Picture}}" alt="" class="circle responsive-img"/></div></a></li>
         {{else}}
           <li><a href="/login">Login</a></li>
         {{end}}

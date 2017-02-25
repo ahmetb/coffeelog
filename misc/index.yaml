@@ -1,0 +1,6 @@
+indexes:
+- kind: Activity
+  properties:
+  - name: UserID
+  - name: Date
+    direction: desc
