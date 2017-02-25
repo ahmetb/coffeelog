@@ -134,6 +134,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.WithField("logged_in", user != nil).Debug("serving home page")
 	tmpl := template.Must(template.ParseFiles(
 		filepath.Join("static", "template", "layout.html"),
 		filepath.Join("static", "template", "home.html")))
@@ -141,6 +142,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.Execute(w, map[string]interface{}{
 		"me":              user,
 		"drinks":          drinks,
+		"methods":         methods,
 		"authenticated":   user != nil,
 		"originCountries": originCountries}); err != nil {
 		log.Fatal(err)
@@ -508,8 +510,22 @@ var (
 		"Corretto":    true,
 		// non-espresso based:
 		"Brewed coffee": false,
+		"Cold brew":     false,
 		"Iced coffee":   false,
 		"Decaf coffee":  false,
 		"Café au lait":  false, // ?
+	}
+
+	// TODO fix these with proper attribution to designers.
+	methods = []struct{ Name, Icon string }{
+		{"Espresso", "espresso-machine.png"},
+		{"Chemex", "chemex.png"},
+		{"Aeropress", "aeropress.png"},
+		{"Hario V60", "v60.png"},
+		{"French press", "french-press.png"},
+		{"Dripper", "dripper.png"},
+		{"Kyoto Dripper", "kyoto.png"},
+		{"Moka Pot", "moka.png"},
+		{"Turkish coffee", "turkish.png"},
 	}
 )

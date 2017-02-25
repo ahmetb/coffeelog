@@ -2,7 +2,7 @@
 
 {{define "body"}}
     <div class="row">
-    {{ if .user}}
+    {{ if .me}}
         <script type="text/javascript">
         $(document).ready(function() {
             $('select').material_select();
@@ -107,16 +107,9 @@
                 <div class="brew-info input-field col s6 m4" style="display:none;">
                     <select id="brew-method" name="brew-method">
                         <option value="" disabled selected>Choose a method</option>
-                        <option>Espresso</option>
-                        <option>Chemex</option>
-                        <option>Aeropress</option>
-                        <option>Hario V60</option>
-                        <option>French press</option>
-                        <option>Dripper</option>
-                        <option>Cold Brew</option>
-                        <option>Moka Pot</option>
-                        <option>Turkish coffee</option>
-                        <option>Ethiopian ceremony</option>
+                        {{- range $i, $m := .methods }}
+                        <option data-icon="/static/img/methods/{{$m.Icon}}">{{$m.Name}}</option>
+                        {{ end -}}
                     </select>
                     <label for="brew-method">Brew method</label>
                 </div>
