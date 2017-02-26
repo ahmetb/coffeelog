@@ -12,10 +12,8 @@ import (
 )
 
 const (
-	projectID = "ahmetb-starter" // TODO configurable
-
-	coffeeDirectoryBackend = "127.0.0.1:8002" // TODO use service discovery
-	userDirectoryBackend   = "127.0.0.1:8001" // TODO use service discovery
+	projectID            = "ahmetb-starter" // TODO make configurable
+	userDirectoryBackend = "userdirectory.default:80"
 )
 
 var log *logrus.Entry

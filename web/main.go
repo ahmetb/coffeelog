@@ -31,8 +31,8 @@ var (
 	blockKey = []byte("a-lot-secret-key") // TODO extract to env
 	sc       = securecookie.New(hashKey, blockKey)
 
-	userDirectoryBackend   = "127.0.0.1:8001" // TODO use service discovery
-	coffeeDirectoryBackend = "127.0.0.1:8002" // TODO use service discovery
+	userDirectoryBackend   = "userdirectory.default:80"
+	coffeeDirectoryBackend = "coffeedirectory.default:80"
 )
 
 var log *logrus.Entry
@@ -150,6 +150,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	cfg.RedirectURL = "http://" + r.Host + "/oauth2callback" // figure out from request, hacky
 	cfg.Scopes = []string{"profile", "email"}
 	url := cfg.AuthCodeURL("todo_rand_state",
 		oauth2.SetAuthURLParam("access_type", "offline"))
