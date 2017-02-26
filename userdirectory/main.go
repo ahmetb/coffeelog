@@ -33,7 +33,7 @@ func main() {
 	}
 	defer ds.Close()
 
-	addr := "127.0.0.1:8001" // TODO make configurable
+	addr := "0.0.0.0:8001" // TODO make configurable
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatal(err)

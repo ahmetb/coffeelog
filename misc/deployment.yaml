@@ -1,0 +1,96 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: web-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      volumes:
+      - name: oauth-secrets
+        secret:
+          secretName: oauth2
+          items:
+          - key: client-secret.json
+            path: client-secret.json
+      containers:
+      - name: web
+        image: web:latest
+        imagePullPolicy: IfNotPresent # minikube-only
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: oauth-secrets
+          mountPath: /etc/secrets
+          readOnly: true
+        env:
+        - name: GOOGLE_OAUTH2_CONFIG
+          value: /etc/secrets/client-secret.json
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: userdirectory-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: userdirectory
+    spec:
+      volumes:
+      - name: oauth-secrets
+        secret:
+          secretName: google-service-account
+          items:
+          - key: app_default_credentials.json
+            path: app-credentials.json
+      containers:
+      - name: userdirectory
+        image: userdirectory:latest
+        imagePullPolicy: IfNotPresent # minikube-only
+        ports:
+        - containerPort: 8001
+        volumeMounts:
+        - name: oauth-secrets
+          mountPath: /etc/secrets
+          readOnly: true
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/secrets/app-credentials.json
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: coffeedirectory-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: coffeedirectory
+    spec:
+      volumes:
+      - name: oauth-secrets
+        secret:
+          secretName: google-service-account
+          items:
+          - key: app_default_credentials.json
+            path: app-credentials.json
+      containers:
+      - name: coffeedirectory
+        image: coffeedirectory:latest
+        imagePullPolicy: IfNotPresent # minikube-only
+        ports:
+        - containerPort: 8002
+        volumeMounts:
+        - name: oauth-secrets
+          mountPath: /etc/secrets
+          readOnly: true
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/secrets/app-credentials.json
