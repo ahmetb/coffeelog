@@ -30,6 +30,10 @@ spec:
         env:
         - name: GOOGLE_OAUTH2_CONFIG
           value: /etc/secrets/client-secret.json
+        - name: USER_DIRECTORY_HOST
+          value: userdirectory.default:80
+        - name: COFFEE_DIRECTORY_HOST
+          value: coffeedirectory.default:80
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -94,3 +98,5 @@ spec:
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/secrets/app-credentials.json
+        - name: USER_DIRECTORY_HOST
+          value: userdirectory.default:80

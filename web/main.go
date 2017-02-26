@@ -31,8 +31,8 @@ var (
 	blockKey = []byte("a-lot-secret-key") // TODO extract to env
 	sc       = securecookie.New(hashKey, blockKey)
 
-	userDirectoryBackend   = "userdirectory.default:80"
-	coffeeDirectoryBackend = "coffeedirectory.default:80"
+	userDirectoryBackend   string
+	coffeeDirectoryBackend string
 )
 
 var log *logrus.Entry
@@ -42,6 +42,16 @@ func main() {
 	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	log = logrus.WithField("service", "web")
 	sc.SetSerializer(securecookie.JSONEncoder{})
+
+	userDirectoryBackend = os.Getenv("USER_DIRECTORY_HOST")
+	if userDirectoryBackend == "" {
+		log.Fatal("USER_DIRECTORY_HOST not set")
+	}
+
+	coffeeDirectoryBackend = os.Getenv("COFFEE_DIRECTORY_HOST")
+	if coffeeDirectoryBackend == "" {
+		log.Fatal("COFFEE_DIRECTORY_HOST not set")
+	}
 
 	// read oauth2 config
 	env := "GOOGLE_OAUTH2_CONFIG"

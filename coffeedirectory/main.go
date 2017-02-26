@@ -12,11 +12,13 @@ import (
 )
 
 const (
-	projectID            = "ahmetb-starter" // TODO make configurable
-	userDirectoryBackend = "userdirectory.default:80"
+	projectID = "ahmetb-starter" // TODO make configurable
 )
 
-var log *logrus.Entry
+var (
+	userDirectoryBackend string
+	log                  *logrus.Entry
+)
 
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
@@ -25,6 +27,10 @@ func main() {
 
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
 		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
+	}
+	userDirectoryBackend = os.Getenv("USER_DIRECTORY_HOST")
+	if userDirectoryBackend == "" {
+		log.Fatal("USER_DIRECTORY_HOST not set")
 	}
 
 	ds, err := datastore.NewClient(context.TODO(), projectID)
