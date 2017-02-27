@@ -346,6 +346,15 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	}
 	defer cc.Close()
 
+	var pFile *pb.PostActivityRequest_File
+	if len(picture) > 0 {
+		pFile = &pb.PostActivityRequest_File{
+			Data:        picture,
+			ContentType: h.Header.Get("Content-Type"),
+			Filename:    h.Filename,
+		}
+	}
+
 	ts, err := ptypes.TimestampProto(time.Now())
 	if err != nil {
 		serverError(w, errors.Wrap(err, "cannot convert timestamp to proto"))
@@ -362,12 +371,8 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 		RoasterName: roasterName,
 		Homebrew:    homebrew,
 		Method:      method,
-		Picture: &pb.PostActivityRequest_File{
-			Data:        picture,
-			ContentType: h.Header.Get("Content-Type"),
-			Filename:    h.Filename,
-		},
-		Notes: notes,
+		Picture:     pFile,
+		Notes:       notes,
 	})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to save activity"))
