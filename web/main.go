@@ -39,7 +39,7 @@ var log *logrus.Entry
 
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 	log = logrus.WithField("service", "web")
 	sc.SetSerializer(securecookie.JSONEncoder{})
 

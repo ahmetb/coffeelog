@@ -20,7 +20,7 @@ var log *logrus.Entry
 
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 	log = logrus.WithField("service", "userdirectory")
 
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
