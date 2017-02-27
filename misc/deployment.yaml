@@ -19,7 +19,7 @@ spec:
             path: client-secret.json
       containers:
       - name: web
-        image: gcr.io/ahmetb-starter/monoimage:latest
+        image: gcr.io/ahmetb-starter/monoimage:d1ca234054526a907e135da7de4c0901cb136d32
         imagePullPolicy: IfNotPresent # minikube-only
         command: ["web"]
         ports:
@@ -35,6 +35,10 @@ spec:
           value: userdirectory.default:80
         - name: COFFEE_DIRECTORY_HOST
           value: coffeedirectory.default:80
+        livenessProbe:
+          initialDelaySeconds: 10
+          tcpSocket:
+            port: 8000
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -56,7 +60,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: userdirectory
-        image: gcr.io/ahmetb-starter/monoimage:latest
+        image: gcr.io/ahmetb-starter/monoimage:d1ca234054526a907e135da7de4c0901cb136d32
         command: ["userdirectory"]
         imagePullPolicy: IfNotPresent # minikube-only
         ports:
@@ -68,6 +72,10 @@ spec:
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/secrets/app-credentials.json
+        livenessProbe:
+          initialDelaySeconds: 10
+          tcpSocket:
+            port: 8001
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -89,7 +97,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: coffeedirectory
-        image: gcr.io/ahmetb-starter/monoimage:latest
+        image: gcr.io/ahmetb-starter/monoimage:d1ca234054526a907e135da7de4c0901cb136d32
         imagePullPolicy: IfNotPresent # minikube-only
         command: ["coffeedirectory"]
         ports:
@@ -103,3 +111,7 @@ spec:
           value: /etc/secrets/app-credentials.json
         - name: USER_DIRECTORY_HOST
           value: userdirectory.default:80
+        livenessProbe:
+          initialDelaySeconds: 10
+          tcpSocket:
+            port: 8002
