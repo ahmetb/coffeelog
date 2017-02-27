@@ -19,8 +19,9 @@ spec:
             path: client-secret.json
       containers:
       - name: web
-        image: web:latest
+        image: gcr.io/ahmetb-starter/monoimage:latest
         imagePullPolicy: IfNotPresent # minikube-only
+        command: ["web"]
         ports:
         - containerPort: 8000
         volumeMounts:
@@ -40,7 +41,7 @@ kind: Deployment
 metadata:
   name: userdirectory-deployment
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -55,7 +56,8 @@ spec:
             path: app-credentials.json
       containers:
       - name: userdirectory
-        image: userdirectory:latest
+        image: gcr.io/ahmetb-starter/monoimage:latest
+        command: ["userdirectory"]
         imagePullPolicy: IfNotPresent # minikube-only
         ports:
         - containerPort: 8001
@@ -87,8 +89,9 @@ spec:
             path: app-credentials.json
       containers:
       - name: coffeedirectory
-        image: coffeedirectory:latest
+        image: gcr.io/ahmetb-starter/monoimage:latest
         imagePullPolicy: IfNotPresent # minikube-only
+        command: ["coffeedirectory"]
         ports:
         - containerPort: 8002
         volumeMounts:
