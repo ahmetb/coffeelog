@@ -21,6 +21,10 @@ dependencies:
     - sudo /opt/google-cloud-sdk/bin/gcloud config set compute/zone ${CLOUDSDK_COMPUTE_ZONE}
     - sudo /opt/google-cloud-sdk/bin/gcloud --quiet container clusters get-credentials $CLUSTER_NAME
 
+test:
+  post:
+    - true # no-op
+
 deployment:
   prod:
     branch: master
