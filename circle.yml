@@ -1,7 +1,6 @@
 # Adopted from:
 # -https://github.com/circleci/docker-hello-google/blob/master/circle.yml
 # - https://circleci.com/docs/1.0/continuous-deployment-with-google-container-engine/
-
 machine:
   environment:
     PROJECT_NAME: ahmetb-starter
@@ -13,10 +12,14 @@ dependencies:
   pre:
     - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update
     - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update kubectl
-    - echo $GCLOUD_SERVICE_KEY | base64 -d > ${HOME}/account-auth.json
+    - echo $GCLOUD_SERVICE_KEY | base64 -d -i > ${HOME}/account-auth.json
     - sudo /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
     - sudo /opt/google-cloud-sdk/bin/gcloud config set project $PROJECT_NAME
     - sudo /opt/google-cloud-sdk/bin/gcloud container clusters get-credentials $CLUSTER_NAME --zone ${CLOUDSDK_COMPUTE_ZONE}
+
+test:
+  post:
+    - echo "noop"
 
 deployment:
   prod:
