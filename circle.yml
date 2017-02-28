@@ -24,4 +24,5 @@ deployment:
     branch: master
     commands:
       - sed -i "s/:latest/:$CIRCLE_SHA1/g" misc/deployment.yaml
+      - sudo chown -R ubuntu:ubuntu /home/ubuntu/.kube
       - kubectl apply -f misc/deployment.yaml
