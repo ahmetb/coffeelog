@@ -7,9 +7,11 @@ machine:
     PROJECT_NAME: ahmetb-starter
     CLUSTER_NAME: coffee
     CLOUDSDK_COMPUTE_ZONE: us-central1-a
+    GOOGLE_APPLICATION_CREDENTIALS: ${HOME}
 
 dependencies:
   pre:
+    - env
     - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update
     - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update kubectl
     - echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${HOME}/account-auth.json
