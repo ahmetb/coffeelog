@@ -19,7 +19,7 @@ spec:
             path: client-secret.json
       containers:
       - name: web
-        image: gcr.io/ahmetb-starter/monoimage:d1ca234054526a907e135da7de4c0901cb136d32
+        image: gcr.io/ahmetb-starter/monoimage:latest
         imagePullPolicy: IfNotPresent # minikube-only
         command: ["web"]
         ports:
@@ -60,7 +60,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: userdirectory
-        image: gcr.io/ahmetb-starter/monoimage:d1ca234054526a907e135da7de4c0901cb136d32
+        image: gcr.io/ahmetb-starter/monoimage:latest
         command: ["userdirectory"]
         imagePullPolicy: IfNotPresent # minikube-only
         ports:
@@ -97,7 +97,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: coffeedirectory
-        image: gcr.io/ahmetb-starter/monoimage:d1ca234054526a907e135da7de4c0901cb136d32
+        image: gcr.io/ahmetb-starter/monoimage:latest
         imagePullPolicy: IfNotPresent # minikube-only
         command: ["coffeedirectory"]
         ports:

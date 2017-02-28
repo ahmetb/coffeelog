@@ -1,0 +1,27 @@
+# Adopted from:
+# -https://github.com/circleci/docker-hello-google/blob/master/circle.yml
+# - https://circleci.com/docs/1.0/continuous-deployment-with-google-container-engine/
+
+machine:
+  environment:
+    PROJECT_NAME: ahmetb-starter
+    CLUSTER_NAME: coffee
+    CLOUDSDK_COMPUTE_ZONE: us-central1-a
+
+dependencies:
+  pre:
+    - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update
+    - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update kubectl
+    - echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${HOME}/account-auth.json
+    - sudo /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
+    - sudo /opt/google-cloud-sdk/bin/gcloud config set project $PROJECT_NAME
+    - sudo /opt/google-cloud-sdk/bin/gcloud --quiet config set container/cluster $CLUSTER_NAME
+    - sudo /opt/google-cloud-sdk/bin/gcloud config set compute/zone ${CLOUDSDK_COMPUTE_ZONE}
+    - sudo /opt/google-cloud-sdk/bin/gcloud --quiet container clusters get-credentials $CLUSTER_NAME
+
+deployment:
+  prod:
+    branch: master
+    commands:
+      - sed -i "s/:latest/:$CIRCLE_SHA1/g" misc/deployment.yaml
+      - kubectl apply -f misc/deployment.yaml
