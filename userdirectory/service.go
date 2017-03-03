@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
+	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"

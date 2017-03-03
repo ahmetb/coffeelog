@@ -3,8 +3,8 @@
 # which microservice you want to execute.
 FROM golang:1.8-alpine
 
-COPY . /go/src/github.com/ahmetalpbalkan/coffeelog
-WORKDIR src/github.com/ahmetalpbalkan/coffeelog
+COPY . /go/src/github.com/ahmetb/coffeelog
+WORKDIR src/github.com/ahmetb/coffeelog
 RUN go install -v ./... 2>&1
 
 # 'web' service requires static files and templates

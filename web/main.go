@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
+	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/golang/protobuf/ptypes"
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"

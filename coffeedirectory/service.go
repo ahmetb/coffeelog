@@ -7,7 +7,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/storage"
-	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
+	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
