@@ -108,7 +108,7 @@
                     <select id="brew-method" name="brew-method">
                         <option value="" disabled selected>Choose a method</option>
                         {{- range $i, $m := .methods }}
-                        <option data-icon="/static/img/methods/{{$m.Icon}}">{{$m.Name}}</option>
+                        <option todo-enable-data-icon="/static/img/methods/{{$m.Icon}}">{{$m.Name}}</option>
                         {{ end -}}
                     </select>
                     <label for="brew-method">Brew method</label>
