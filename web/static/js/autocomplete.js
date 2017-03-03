@@ -1,3 +1,6 @@
+// Adopted from https://github.com/dellert/autocompleteajax
+// under MIT license.
+
 /**************************
  * Auto complete plugin  *
  *************************/
