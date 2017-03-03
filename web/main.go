@@ -69,7 +69,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "cannot get hostname"))
 	}
 	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetFormatter(&logrus.JSONFormatter{FieldMap: logrus.FieldMap{logrus.FieldKeyLevel: "severity"}})
 	log = logrus.WithFields(logrus.Fields{
 		"service": "web",
 		"host":    host,
