@@ -25,7 +25,7 @@ type account struct {
 }
 
 func (u *userDirectory) AuthorizeGoogle(ctx context.Context, goog *pb.GoogleUser) (*pb.User, error) {
-	log := logrus.WithFields(logrus.Fields{
+	log := log.WithFields(logrus.Fields{
 		"op":        "AuthorizeGoogle",
 		"google.id": goog.GetID()})
 	log.Debug("received request")
@@ -69,7 +69,7 @@ func (u *userDirectory) AuthorizeGoogle(ctx context.Context, goog *pb.GoogleUser
 }
 
 func (u *userDirectory) GetUser(ctx context.Context, req *pb.UserRequest) (*pb.UserResponse, error) {
-	log := logrus.WithFields(logrus.Fields{
+	log := log.WithFields(logrus.Fields{
 		"op": "GetUser",
 		"id": req.GetID()})
 	start := time.Now()

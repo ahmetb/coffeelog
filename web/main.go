@@ -420,7 +420,7 @@ func (s *server) autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 		serverError(w, errors.Wrap(err, "failed to encode the response"))
 		return
 	}
-	logrus.WithFields(logrus.Fields{
+	log.WithFields(logrus.Fields{
 		"q":       q,
 		"matches": len(v)}).Debug("autocomplete response")
 }
