@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"net"
 	"os"
 
@@ -13,13 +14,15 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	projectID = "ahmetb-starter" // TODO configurable
+var (
+	projectID = flag.String("google-project-id", "", "google cloud project id")
+	addr      = flag.String("addr", ":8001", "[host]:port to listen")
+
+	log *logrus.Entry
 )
 
-var log *logrus.Entry
-
 func main() {
+	flag.Parse()
 	host, err := os.Hostname()
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot get hostname"))
@@ -35,19 +38,23 @@ func main() {
 		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
 	}
 
-	ds, err := datastore.NewClient(context.TODO(), projectID)
+	if *projectID == "" {
+		log.Fatal("google cloud project id is not set")
+	}
+
+	ctx := context.Background()
+	ds, err := datastore.NewClient(ctx, *projectID)
 	if err != nil {
 		log.WithField("error", err).Fatal("failed to create client")
 	}
 	defer ds.Close()
 
-	addr := "0.0.0.0:8001" // TODO make configurable
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp", *addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserDirectoryServer(grpcServer, &userDirectory{ds})
-	log.WithField("addr", addr).Info("starting to listen on grpc")
+	log.WithField("addr", *addr).Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))
 }

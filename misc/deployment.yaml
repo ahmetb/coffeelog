@@ -61,7 +61,10 @@ spec:
       containers:
       - name: userdirectory
         image: gcr.io/ahmetb-starter/monoimage:latest
-        command: ["userdirectory"]
+        command:
+        - "userdirectory"
+        - "-addr=:8001"
+        - "-google-project-id=ahmetb-starter"
         imagePullPolicy: IfNotPresent # minikube-only
         ports:
         - containerPort: 8001

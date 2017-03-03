@@ -42,6 +42,9 @@ func main() {
 	if *userDirectoryBackend == "" {
 		log.Fatal("user directory flag not specified")
 	}
+	if *projectID == "" {
+		log.Fatal("google cloud project id is not set")
+	}
 
 	ds, err := datastore.NewClient(ctx, *projectID)
 	if err != nil {
