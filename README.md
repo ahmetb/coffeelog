@@ -14,6 +14,8 @@ test new DevOps technologies and features of Google Cloud Platform. It uses:
 - Kubernetes on Google Container Engine
 - Stackdriver Logging
 
+**Disclaimer:** This is not an official Google product.
+
 ## Required Configuration
 
 1. a Google Cloud Platform project ID
