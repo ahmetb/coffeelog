@@ -15,6 +15,7 @@ import (
 	"time"
 
 	pb "github.com/ahmetb/coffeelog/coffeelog"
+	"github.com/ahmetb/coffeelog/version"
 	"github.com/golang/protobuf/ptypes"
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"
@@ -58,6 +59,7 @@ func main() {
 	log = logrus.WithFields(logrus.Fields{
 		"service": "web",
 		"host":    host,
+		"v":       version.Version(),
 	})
 	sc.SetSerializer(securecookie.JSONEncoder{})
 

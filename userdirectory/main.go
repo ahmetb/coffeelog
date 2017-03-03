@@ -9,6 +9,7 @@ import (
 	"cloud.google.com/go/datastore"
 
 	pb "github.com/ahmetb/coffeelog/coffeelog"
+	"github.com/ahmetb/coffeelog/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -32,6 +33,7 @@ func main() {
 	log = logrus.WithFields(logrus.Fields{
 		"service": "userdirectory",
 		"host":    host,
+		"v":       version.Version(),
 	})
 
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
