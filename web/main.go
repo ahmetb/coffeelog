@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -33,17 +34,21 @@ type server struct {
 }
 
 var (
+	projectID              = flag.String("google-project-id", "", "google cloud project id")
+	addr                   = flag.String("addr", ":8000", "[host]:port to listen")
+	oauthConfig            = flag.String("google-oauth2-config", "", "path to oauth2 config json")
+	userDirectoryBackend   = flag.String("user-directory-addr", "", "address of user directory backend")
+	coffeeDirectoryBackend = flag.String("coffee-directory-addr", "", "address of coffee directory backend")
+
 	hashKey  = []byte("very-secret")      // TODO extract to env
 	blockKey = []byte("a-lot-secret-key") // TODO extract to env
 	sc       = securecookie.New(hashKey, blockKey)
-
-	userDirectoryBackend   string
-	coffeeDirectoryBackend string
 )
 
 var log *logrus.Entry
 
 func main() {
+	flag.Parse()
 	host, err := os.Hostname()
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot get hostname"))
@@ -56,21 +61,17 @@ func main() {
 	})
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
-	userDirectoryBackend = os.Getenv("USER_DIRECTORY_HOST")
-	if userDirectoryBackend == "" {
-		log.Fatal("USER_DIRECTORY_HOST not set")
+	if *userDirectoryBackend == "" {
+		log.Fatal("user directory address flag not specified")
+	}
+	if *coffeeDirectoryBackend == "" {
+		log.Fatal("user directory address flag not specified")
+	}
+	if *oauthConfig == "" {
+		log.Fatal("google oauth2 config flag not specified")
 	}
 
-	coffeeDirectoryBackend = os.Getenv("COFFEE_DIRECTORY_HOST")
-	if coffeeDirectoryBackend == "" {
-		log.Fatal("COFFEE_DIRECTORY_HOST not set")
-	}
-
-	env := "GOOGLE_OAUTH2_CONFIG"
-	if os.Getenv(env) == "" {
-		log.Fatalf("%s is not set", env)
-	}
-	b, err := ioutil.ReadFile(os.Getenv(env))
+	b, err := ioutil.ReadFile(*oauthConfig)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse config file"))
 	}
@@ -79,7 +80,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to parse config file"))
 	}
 
-	userSvcConn, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	userSvcConn, err := grpc.Dial(*userDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect user service"))
 	}
@@ -87,7 +88,7 @@ func main() {
 		log.Info("closing connection to user directory")
 		userSvcConn.Close()
 	}()
-	coffeeSvcConn, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
+	coffeeSvcConn, err := grpc.Dial(*coffeeDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect coffee service"))
 	}
@@ -116,9 +117,9 @@ func main() {
 	r.HandleFunc("/autocomplete/roaster", logHandler(s.autocompleteRoaster)).Methods(http.MethodGet)
 
 	srv := http.Server{
-		Addr:    "0.0.0.0:8000", // TODO make configurable
+		Addr:    *addr, // TODO make configurable
 		Handler: r}
-	log.WithField("addr", srv.Addr).Info("starting to listen on http")
+	log.WithField("addr", *addr).Info("starting to listen on http")
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 

@@ -21,20 +21,18 @@ spec:
       - name: web
         image: gcr.io/ahmetb-starter/monoimage:latest
         imagePullPolicy: IfNotPresent # minikube-only
-        command: ["web"]
+        command:
+        - "web"
+        - "-addr=:8000"
+        - "-google-oauth2-config=/etc/secrets/client-secret.json"
+        - "-user-directory-addr=userdirectory.default:80"
+        - "-coffee-directory-addr=coffeedirectory.default:80"
         ports:
         - containerPort: 8000
         volumeMounts:
         - name: oauth-secrets
           mountPath: /etc/secrets
           readOnly: true
-        env:
-        - name: GOOGLE_OAUTH2_CONFIG
-          value: /etc/secrets/client-secret.json
-        - name: USER_DIRECTORY_HOST
-          value: userdirectory.default:80
-        - name: COFFEE_DIRECTORY_HOST
-          value: coffeedirectory.default:80
         livenessProbe:
           initialDelaySeconds: 10
           tcpSocket:
