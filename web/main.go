@@ -39,6 +39,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 )
 
 type server struct {
@@ -75,6 +76,7 @@ func main() {
 		"host":    host,
 		"v":       version.Version(),
 	})
+	grpclog.SetLogger(log.WithField("facility", "grpc"))
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
 	if *userDirectoryBackend == "" {

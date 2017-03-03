@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 )
 
 var (
@@ -49,6 +50,7 @@ func main() {
 		"host":    host,
 		"v":       version.Version(),
 	})
+	grpclog.SetLogger(log.WithField("facility", "grpc"))
 
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
 		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
