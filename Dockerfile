@@ -1,8 +1,11 @@
+# This dockerfile builds a monoimage that contains
+# all microservices. Use ENTRYPOINT/CMD to specify
+# which microservice you want to execute.
 FROM golang:1.8-alpine
 
 COPY . /go/src/github.com/ahmetalpbalkan/coffeelog
 WORKDIR src/github.com/ahmetalpbalkan/coffeelog
-RUN go install -v ./...
+RUN go install -v ./... 2>&1
 
 # 'web' service requires static files and templates
 # to be present within ./static

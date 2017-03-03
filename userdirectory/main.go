@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/datastore"
 
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -19,9 +20,16 @@ const (
 var log *logrus.Entry
 
 func main() {
+	host, err := os.Hostname()
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "cannot get hostname"))
+	}
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-	log = logrus.WithField("service", "userdirectory")
+	log = logrus.WithFields(logrus.Fields{
+		"service": "userdirectory",
+		"host":    host,
+	})
 
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
 		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")

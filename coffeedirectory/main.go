@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -21,9 +22,16 @@ var (
 )
 
 func main() {
+	host, err := os.Hostname()
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "cannot get hostname"))
+	}
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-	log = logrus.WithField("service", "coffeedirectory")
+	log = logrus.WithFields(logrus.Fields{
+		"service": "coffeedirectory",
+		"host":    host,
+	})
 
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
 		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
@@ -44,8 +52,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to contact user directory"))
+	}
+	defer func() {
+		log.Debug("closing connection to user directory")
+		cc.Close()
+	}()
+
 	grpcServer := grpc.NewServer()
-	svc := &service{ds}
+	svc := &service{ds, pb.NewUserDirectoryClient(cc)}
 	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
 	pb.RegisterActivityDirectoryServer(grpcServer, svc)
 	log.WithField("addr", addr).WithField("service", "coffeedirectory").Info("starting to listen on grpc")

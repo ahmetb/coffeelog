@@ -5,8 +5,6 @@ import (
 	"path"
 	"time"
 
-	"google.golang.org/grpc"
-
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/storage"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
@@ -25,7 +23,8 @@ const (
 )
 
 type service struct {
-	ds *datastore.Client
+	ds      *datastore.Client
+	userSvc pb.UserDirectoryClient
 }
 
 // roaster as represented in Datastore.
@@ -235,13 +234,7 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 		return nil, errors.Wrap(err, "error querying datastore for activity")
 	}
 
-	// TODO eliminate duplication
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to contact user directory")
-	}
-	defer cc.Close()
-	user, err := pb.NewUserDirectoryClient(cc).GetUser(ctx, &pb.UserRequest{ID: v.UserID})
+	user, err := c.userSvc.GetUser(ctx, &pb.UserRequest{ID: v.UserID})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to retrieve activity owner")
 	}
@@ -256,13 +249,7 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 func (c *service) GetUserActivities(ctx context.Context, req *pb.UserActivitiesRequest) (*pb.UserActivitiesResponse, error) {
 	log.WithField("user.id", req.GetUserID()).Debug("querying datastore for activities")
 
-	// TODO eliminate duplication
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to contact user directory")
-	}
-	defer cc.Close()
-	user, err := pb.NewUserDirectoryClient(cc).GetUser(ctx, &pb.UserRequest{ID: req.GetUserID()})
+	user, err := c.userSvc.GetUser(ctx, &pb.UserRequest{ID: req.GetUserID()})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to retrieve user profile")
 	}

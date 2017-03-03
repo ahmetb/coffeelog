@@ -25,8 +25,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+type server struct {
+	cfg         *oauth2.Config
+	userSvc     pb.UserDirectoryClient
+	roasterSvc  pb.RoasterDirectoryClient
+	activitySvc pb.ActivityDirectoryClient
+}
+
 var (
-	cfg      *oauth2.Config
 	hashKey  = []byte("very-secret")      // TODO extract to env
 	blockKey = []byte("a-lot-secret-key") // TODO extract to env
 	sc       = securecookie.New(hashKey, blockKey)
@@ -38,9 +44,16 @@ var (
 var log *logrus.Entry
 
 func main() {
+	host, err := os.Hostname()
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "cannot get hostname"))
+	}
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-	log = logrus.WithField("service", "web")
+	log = logrus.WithFields(logrus.Fields{
+		"service": "web",
+		"host":    host,
+	})
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
 	userDirectoryBackend = os.Getenv("USER_DIRECTORY_HOST")
@@ -53,32 +66,55 @@ func main() {
 		log.Fatal("COFFEE_DIRECTORY_HOST not set")
 	}
 
-	// read oauth2 config
 	env := "GOOGLE_OAUTH2_CONFIG"
 	if os.Getenv(env) == "" {
 		log.Fatalf("%s is not set", env)
 	}
 	b, err := ioutil.ReadFile(os.Getenv(env))
 	if err != nil {
-		panic(errors.Wrap(err, "failed to parse config file"))
+		log.Fatal(errors.Wrap(err, "failed to parse config file"))
 	}
 	authConf, err := google.ConfigFromJSON(b)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to parse config file"))
+		log.Fatal(errors.Wrap(err, "failed to parse config file"))
 	}
-	cfg = authConf
+
+	userSvcConn, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "cannot connect user service"))
+	}
+	defer func() {
+		log.Info("closing connection to user directory")
+		userSvcConn.Close()
+	}()
+	coffeeSvcConn, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "cannot connect coffee service"))
+	}
+	defer func() {
+		log.Info("closing connection to user directory")
+		coffeeSvcConn.Close()
+	}()
+
+	s := &server{
+		cfg:         authConf,
+		userSvc:     pb.NewUserDirectoryClient(userSvcConn),
+		activitySvc: pb.NewActivityDirectoryClient(coffeeSvcConn),
+		roasterSvc:  pb.NewRoasterDirectoryClient(coffeeSvcConn),
+	}
 
 	// set up server
 	r := mux.NewRouter()
 	r.PathPrefix("/static/").HandlerFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP)
-	r.HandleFunc("/", logHandler(home)).Methods(http.MethodGet)
-	r.HandleFunc("/login", logHandler(login)).Methods(http.MethodGet)
-	r.HandleFunc("/logout", logHandler(logout)).Methods(http.MethodGet)
-	r.HandleFunc("/oauth2callback", logHandler(oauth2Callback)).Methods(http.MethodGet)
-	r.HandleFunc("/coffee", logHandler(logCoffee)).Methods(http.MethodPost)
-	r.HandleFunc("/a/{id:[0-9]+}", logHandler(activity)).Methods(http.MethodGet)
-	r.HandleFunc("/u/{id:[0-9]+}", logHandler(userProfile)).Methods(http.MethodGet)
-	r.HandleFunc("/autocomplete/roaster", logHandler(autocompleteRoaster)).Methods(http.MethodGet)
+	r.HandleFunc("/", logHandler(s.home)).Methods(http.MethodGet)
+	r.HandleFunc("/login", logHandler(s.login)).Methods(http.MethodGet)
+	r.HandleFunc("/logout", logHandler(s.logout)).Methods(http.MethodGet)
+	r.HandleFunc("/oauth2callback", logHandler(s.oauth2Callback)).Methods(http.MethodGet)
+	r.HandleFunc("/coffee", logHandler(s.logCoffee)).Methods(http.MethodPost)
+	r.HandleFunc("/a/{id:[0-9]+}", logHandler(s.activity)).Methods(http.MethodGet)
+	r.HandleFunc("/u/{id:[0-9]+}", logHandler(s.userProfile)).Methods(http.MethodGet)
+	r.HandleFunc("/autocomplete/roaster", logHandler(s.autocompleteRoaster)).Methods(http.MethodGet)
+
 	srv := http.Server{
 		Addr:    "0.0.0.0:8000", // TODO make configurable
 		Handler: r}
@@ -86,6 +122,7 @@ func main() {
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 
+// logHandler wraps the HTTP handler with logging.
 func logHandler(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		e := log.WithFields(logrus.Fields{
@@ -105,19 +142,13 @@ func logHandler(h http.HandlerFunc) http.HandlerFunc {
 
 type httpErrorWriter func(http.ResponseWriter, error)
 
-func getUser(id string) (*pb.UserResponse, error) {
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to communicate the backend")
-	}
-	defer cc.Close()
-
-	userResp, err := pb.NewUserDirectoryClient(cc).GetUser(context.TODO(),
+func (s *server) getUser(id string) (*pb.UserResponse, error) {
+	userResp, err := s.userSvc.GetUser(context.TODO(),
 		&pb.UserRequest{ID: id})
 	return userResp, err
 }
 
-func authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
+func (s *server) authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
 	c, err := r.Cookie("user")
 	if err == http.ErrNoCookie {
 		return nil, nil, nil
@@ -128,7 +159,7 @@ func authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err erro
 		return nil, badRequest, errors.Wrap(err, "failed to decode cookie")
 	}
 
-	userResp, err := getUser(userID)
+	userResp, err := s.getUser(userID)
 	if err != nil {
 		return nil, serverError, errors.Wrap(err, "failed to look up the user")
 	} else if !userResp.GetFound() {
@@ -137,8 +168,8 @@ func authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err erro
 	return userResp.GetUser(), nil, nil
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	user, errF, err := authUser(r)
+func (s *server) home(w http.ResponseWriter, r *http.Request) {
+	user, errF, err := s.authUser(r)
 	if err != nil {
 		errF(w, err)
 		return
@@ -159,17 +190,17 @@ func home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-	cfg.RedirectURL = "http://" + r.Host + "/oauth2callback" // figure out from request, hacky
-	cfg.Scopes = []string{"profile", "email"}
-	url := cfg.AuthCodeURL("todo_rand_state",
+func (s *server) login(w http.ResponseWriter, r *http.Request) {
+	s.cfg.RedirectURL = "http://" + r.Host + "/oauth2callback" // TODO this is hacky
+	s.cfg.Scopes = []string{"profile", "email"}
+	url := s.cfg.AuthCodeURL("todo_rand_state",
 		oauth2.SetAuthURLParam("access_type", "offline"))
 	log.Debug("redirecting user to oauth2 consent page")
 	w.Header().Set("Location", url)
 	w.WriteHeader(http.StatusFound)
 }
 
-func logout(w http.ResponseWriter, r *http.Request) {
+func (s *server) logout(w http.ResponseWriter, r *http.Request) {
 	log.Debug("logout requested")
 	for _, c := range r.Cookies() {
 		c.Expires = time.Unix(1, 0)
@@ -180,7 +211,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-func oauth2Callback(w http.ResponseWriter, r *http.Request) {
+func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	if state := r.URL.Query().Get("state"); state != "todo_rand_state" {
 		badRequest(w, errors.New("wrong oauth2 state"))
 		return
@@ -192,13 +223,13 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tok, err := cfg.Exchange(oauth2.NoContext, code)
+	tok, err := s.cfg.Exchange(oauth2.NoContext, code)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "oauth2 token exchange failed"))
 		return
 	}
 
-	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, cfg.TokenSource(oauth2.NoContext, tok)))
+	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, s.cfg.TokenSource(oauth2.NoContext, tok)))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to construct g+ client"))
 		return
@@ -210,14 +241,7 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	}
 	log.WithField("google.id", me.Id).Debug("retrieved google user")
 
-	// reach out to the user directory to save/retrieve user
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-		return
-	}
-	defer cc.Close()
-	user, err := pb.NewUserDirectoryClient(cc).AuthorizeGoogle(context.TODO(),
+	user, err := s.userSvc.AuthorizeGoogle(context.TODO(),
 		&pb.GoogleUser{
 			ID:          me.Id,
 			Email:       me.Emails[0].Value,
@@ -249,20 +273,8 @@ func oauth2Callback(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-func unauthorized(w http.ResponseWriter, err error) {
-	errorCode(w, http.StatusUnauthorized, "unauthorized", err)
-}
-
-func badRequest(w http.ResponseWriter, err error) {
-	errorCode(w, http.StatusBadRequest, "bad request", err)
-}
-
-func serverError(w http.ResponseWriter, err error) {
-	errorCode(w, http.StatusInternalServerError, "server error", err)
-}
-
-func logCoffee(w http.ResponseWriter, r *http.Request) {
-	user, errF, err := authUser(r)
+func (s *server) logCoffee(w http.ResponseWriter, r *http.Request) {
+	user, errF, err := s.authUser(r)
 	if err != nil {
 		errF(w, err)
 		return
@@ -339,13 +351,6 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 		"notes":         notes,
 	}).Info("received form")
 
-	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-		return
-	}
-	defer cc.Close()
-
 	var pFile *pb.PostActivityRequest_File
 	if len(picture) > 0 {
 		pFile = &pb.PostActivityRequest_File{
@@ -359,7 +364,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		serverError(w, errors.Wrap(err, "cannot convert timestamp to proto"))
 	}
-	resp, err := pb.NewActivityDirectoryClient(cc).PostActivity(context.TODO(), &pb.PostActivityRequest{
+	resp, err := s.activitySvc.PostActivity(context.TODO(), &pb.PostActivityRequest{
 		UserID: user.GetID(),
 		Date:   ts,
 		Amount: &pb.Activity_DrinkAmount{
@@ -384,7 +389,7 @@ func logCoffee(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
+func (s *server) autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("data")
 	if len(q) > 100 {
 		badRequest(w, errors.New("request too long"))
@@ -395,14 +400,7 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 		Value string `json:"value"`
 	}
 
-	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-		return
-	}
-	defer cc.Close()
-
-	resp, err := pb.NewRoasterDirectoryClient(cc).ListRoasters(context.TODO(), new(pb.RoastersRequest))
+	resp, err := s.roasterSvc.ListRoasters(context.TODO(), new(pb.RoastersRequest))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to query the roasters"))
 		return
@@ -424,8 +422,8 @@ func autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 		"matches": len(v)}).Debug("autocomplete response")
 }
 
-func activity(w http.ResponseWriter, r *http.Request) {
-	user, ef, err := authUser(r)
+func (s *server) activity(w http.ResponseWriter, r *http.Request) {
+	user, ef, err := s.authUser(r)
 	if err != nil {
 		ef(w, err)
 		return
@@ -441,14 +439,7 @@ func activity(w http.ResponseWriter, r *http.Request) {
 	e := log.WithField("id", id)
 	e.Debug("activity requested")
 
-	// TODO eliminate duplication
-	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-		return
-	}
-	defer cc.Close()
-	ar, err := pb.NewActivityDirectoryClient(cc).GetActivity(context.TODO(), &pb.ActivityRequest{ID: id})
+	ar, err := s.activitySvc.GetActivity(context.TODO(), &pb.ActivityRequest{ID: id})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "cannot get activity"))
 		return
@@ -466,16 +457,16 @@ func activity(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func userProfile(w http.ResponseWriter, r *http.Request) {
+func (s *server) userProfile(w http.ResponseWriter, r *http.Request) {
 	userID := mux.Vars(r)["id"]
 
-	me, ef, err := authUser(r)
+	me, ef, err := s.authUser(r)
 	if err != nil {
 		ef(w, err)
 		return
 	}
 
-	userResp, err := getUser(userID)
+	userResp, err := s.getUser(userID)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to look up the user"))
 		return
@@ -484,15 +475,7 @@ func userProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO eliminate duplicatio
-	cc, err := grpc.Dial(coffeeDirectoryBackend, grpc.WithInsecure())
-	if err != nil {
-		serverError(w, errors.Wrap(err, "failed to communicate the backend"))
-		return
-	}
-	defer cc.Close()
-
-	ar, err := pb.NewActivityDirectoryClient(cc).GetUserActivities(context.TODO(),
+	ar, err := s.activitySvc.GetUserActivities(context.TODO(),
 		&pb.UserActivitiesRequest{UserID: userID})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to query activities"))
@@ -573,3 +556,15 @@ var (
 		{"Turkish coffee", methodIcons["Turkish coffee"]},
 	}
 )
+
+func unauthorized(w http.ResponseWriter, err error) {
+	errorCode(w, http.StatusUnauthorized, "unauthorized", err)
+}
+
+func badRequest(w http.ResponseWriter, err error) {
+	errorCode(w, http.StatusBadRequest, "bad request", err)
+}
+
+func serverError(w http.ResponseWriter, err error) {
+	errorCode(w, http.StatusInternalServerError, "server error", err)
+}
