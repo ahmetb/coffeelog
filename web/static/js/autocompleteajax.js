@@ -1,47 +1,44 @@
-/*
-MIT License
+// MIT License
+//
+// Copyright (c) 2017 Lenar
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-Copyright (c) 2017 Lenar
+// Adopted from https://github.com/dellert/autocompleteajax/
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-// Adopted from https://github.com/dellert/autocompleteajax
-// under MIT license.
-
-/**************************
- * Auto complete plugin  *
- *************************/
 $.fn.autocompleteajax = function (options) {
     // Defaults
     var defaults = {
+        data: {},
         ajax: {},
         callback: null,
         delay: null,
-        minLength: 2
+        minLength: 2,
+        autocomplete_id: null,
+        input_name: null
     };
 
     options = $.extend(defaults, options);
 
     return this.each(function() {
         var $input = $(this);
-        var data = {},
+        var data = options.data,
             $inputDiv = $input.closest('.input-field'); // Div to append on
 
         // Create autocomplete element
@@ -116,7 +113,7 @@ $.fn.autocompleteajax = function (options) {
 
             // Check if the input isn't empty
             if (val !== '') {
-                $.each(data, function(i, value) {
+                (data) && $.each(data, function(i, value) {
                     if (value.value.toLowerCase().indexOf(val) !== -1 &&
                         value.value.toLowerCase() !== val) {
                         var autocompleteOption = $('<li data-id="'+ value.id +'"></li>');
@@ -138,10 +135,24 @@ $.fn.autocompleteajax = function (options) {
         $autocomplete.on('click', 'li', function () {
             $input.val($(this).text().trim());
 
-            if($('.autocomplete-id').length == 0) {
-                $input.after("<input type='hidden' class='autocomplete-id' name='autocomplete-id' value='" + $(this).attr('data-id') + "'>");
+            var autocomplete_id = options.autocomplete_id;
+
+            if (autocomplete_id) {
+                var input_name = options.input_name ? options.input_name : 'autocomplete-id[' + autocomplete_id + ']';
+
+                if($('#' + autocomplete_id).length == 0) {
+                    $input.after("<input type='hidden' id='" + autocomplete_id +
+                        "' name='" + input_name + "' class='multi_autocomplete_id' value='" + $(this).attr('data-id') +
+                        "' data-initial='" + $(this).attr('data-id') + "'>");
+                } else {
+                    $('#' + autocomplete_id).val($(this).attr('data-id')).attr('data-initial', $(this).attr('data-id'));
+                }
             } else {
-                $('.autocomplete-id').val($(this).attr('data-id'));
+                if($('.autocomplete-id').length == 0) {
+                    $input.after("<input type='hidden' class='autocomplete-id' name='autocomplete-id' value='" + $(this).attr('data-id') + "'>");
+                } else {
+                    $('.autocomplete-id').val($(this).attr('data-id'));
+                }
             }
 
             $autocomplete.empty();
