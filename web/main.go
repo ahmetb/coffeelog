@@ -136,7 +136,7 @@ func logHandler(h http.HandlerFunc) http.HandlerFunc {
 		start := time.Now()
 		defer func() {
 			e.WithFields(logrus.Fields{
-				"elapsed": time.Now().Sub(start),
+				"elapsed": time.Now().Sub(start).String(),
 			}).Debug("request completed")
 		}()
 		h(w, r)

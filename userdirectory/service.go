@@ -74,7 +74,7 @@ func (u *userDirectory) GetUser(ctx context.Context, req *pb.UserRequest) (*pb.U
 		"id": req.GetID()})
 	start := time.Now()
 	defer func() {
-		log.WithField("elapsed", time.Since(start)).Debug("completed request")
+		log.WithField("elapsed", time.Since(start).String()).Debug("completed request")
 	}()
 	log.Debug("received request")
 
