@@ -194,7 +194,7 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 		RoasterID:   roaster.GetID(),
 		RoasterName: roaster.GetName(),
 		Notes:       req.GetNotes(),
-		PictureURL:  picURL, // TODO fix
+		PictureURL:  picURL,
 	}
 	k, err := c.ds.Put(ctx, datastore.IncompleteKey(kindActivity, nil), &v)
 	if err != nil {

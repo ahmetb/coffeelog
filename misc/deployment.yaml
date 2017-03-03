@@ -99,7 +99,11 @@ spec:
       - name: coffeedirectory
         image: gcr.io/ahmetb-starter/monoimage:latest
         imagePullPolicy: IfNotPresent # minikube-only
-        command: ["coffeedirectory"]
+        command:
+        - "coffeedirectory"
+        - "-addr=:8002"
+        - "-user-directory-addr=userdirectory.default:80"
+        - "-google-project-id=ahmetb-starter"
         ports:
         - containerPort: 8002
         volumeMounts:
@@ -109,8 +113,6 @@ spec:
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/secrets/app-credentials.json
-        - name: USER_DIRECTORY_HOST
-          value: userdirectory.default:80
         livenessProbe:
           initialDelaySeconds: 10
           tcpSocket:

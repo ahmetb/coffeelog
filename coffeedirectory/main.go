@@ -5,6 +5,8 @@ import (
 	"net"
 	"os"
 
+	"flag"
+
 	"cloud.google.com/go/datastore"
 	pb "github.com/ahmetalpbalkan/coffeelog/coffeelog"
 	"github.com/pkg/errors"
@@ -12,16 +14,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	projectID = "ahmetb-starter" // TODO make configurable
-)
-
 var (
-	userDirectoryBackend string
-	log                  *logrus.Entry
+	userDirectoryBackend = flag.String("user-directory-addr", "", "address of user directory backend")
+	projectID            = flag.String("google-project-id", "", "google cloud project id")
+	addr                 = flag.String("addr", ":8000", "[host]:port to listen")
+
+	log *logrus.Entry
 )
 
 func main() {
+	flag.Parse()
+	ctx := context.Background()
 	host, err := os.Hostname()
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot get hostname"))
@@ -36,24 +39,22 @@ func main() {
 	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
 		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
 	}
-	userDirectoryBackend = os.Getenv("USER_DIRECTORY_HOST")
-	if userDirectoryBackend == "" {
-		log.Fatal("USER_DIRECTORY_HOST not set")
+	if *userDirectoryBackend == "" {
+		log.Fatal("user directory flag not specified")
 	}
 
-	ds, err := datastore.NewClient(context.TODO(), projectID)
+	ds, err := datastore.NewClient(ctx, *projectID)
 	if err != nil {
 		log.WithField("error", err).Fatal("failed to create client")
 	}
 	defer ds.Close()
 
-	addr := "0.0.0.0:8002" // TODO make configurable
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp", *addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cc, err := grpc.Dial(userDirectoryBackend, grpc.WithInsecure())
+	cc, err := grpc.Dial(*userDirectoryBackend, grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to contact user directory"))
 	}
@@ -66,6 +67,7 @@ func main() {
 	svc := &service{ds, pb.NewUserDirectoryClient(cc)}
 	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
 	pb.RegisterActivityDirectoryServer(grpcServer, svc)
-	log.WithField("addr", addr).WithField("service", "coffeedirectory").Info("starting to listen on grpc")
+	log.WithFields(logrus.Fields{"addr": *addr,
+		"service": "coffeedirectory"}).Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))
 }
