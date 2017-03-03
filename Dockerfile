@@ -10,6 +10,9 @@ COPY . /go/src/github.com/ahmetb/coffeelog
 WORKDIR src/github.com/ahmetb/coffeelog
 RUN go install -v -ldflags "-X github.com/ahmetb/coffeelog/version.version=$(git describe --always --dirty)" ./... 2>&1
 
+RUN git status > /status.txt
+RUN git diff > /diff.txt
+
 # 'web' service requires static files and templates
 # to be present within ./static
 # TODO read static files dir from env/cfg
