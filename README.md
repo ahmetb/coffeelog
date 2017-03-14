@@ -44,7 +44,7 @@ If you are going to deploy on Kubernetes, add keys as secrets:
 Build the docker image on minikube node:
 
     eval $(minikube docker-env)
-    docker build -t docker build -t gcr.io/ahmetb-starter/monoimage:latest .
+    docker build -t gcr.io/ahmetb-starter/monoimage:latest .
 
 Deploy:
 
@@ -63,7 +63,7 @@ Google API Manager to `http://coffee.io:32000/oauth2callback`.
 
 Push your image to Google Container Registry
 
-    docker build -t docker build -t gcr.io/<my-project>/coffee:latest
+    docker build -t gcr.io/<my-project>/coffee:latest
     gcloud docker -- push gcr.io/<my-project>/coffee:latest
 
 or set up Continous Build for your Docker images:
