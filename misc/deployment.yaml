@@ -21,8 +21,7 @@ spec:
       - name: web
         image: gcr.io/ahmetb-starter/web:latest
         imagePullPolicy: IfNotPresent # minikube-only
-        command:
-        - "web"
+        args:
         - "-addr=:8000"
         - "-google-oauth2-config=/etc/secrets/client-secret.json"
         - "-user-directory-addr=userdirectory.default:80"
@@ -59,8 +58,7 @@ spec:
       containers:
       - name: userdirectory
         image: gcr.io/ahmetb-starter/userdirectory:latest
-        command:
-        - "userdirectory"
+        args:
         - "-addr=:8001"
         - "-google-project-id=ahmetb-starter"
         imagePullPolicy: IfNotPresent # minikube-only
@@ -100,8 +98,7 @@ spec:
       - name: coffeedirectory
         image: gcr.io/ahmetb-starter/coffeedirectory:latest
         imagePullPolicy: IfNotPresent # minikube-only
-        command:
-        - "coffeedirectory"
+        args:
         - "-addr=:8002"
         - "-user-directory-addr=userdirectory.default:80"
         - "-google-project-id=ahmetb-starter"
