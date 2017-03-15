@@ -19,7 +19,7 @@ spec:
             path: client-secret.json
       containers:
       - name: web
-        image: gcr.io/ahmetb-starter/monoimage:latest
+        image: gcr.io/ahmetb-starter/web:latest
         imagePullPolicy: IfNotPresent # minikube-only
         command:
         - "web"
@@ -58,7 +58,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: userdirectory
-        image: gcr.io/ahmetb-starter/monoimage:latest
+        image: gcr.io/ahmetb-starter/userdirectory:latest
         command:
         - "userdirectory"
         - "-addr=:8001"
@@ -98,7 +98,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: coffeedirectory
-        image: gcr.io/ahmetb-starter/monoimage:latest
+        image: gcr.io/ahmetb-starter/coffeedirectory:latest
         imagePullPolicy: IfNotPresent # minikube-only
         command:
         - "coffeedirectory"

@@ -1,0 +1,33 @@
+# This yaml file is used by Google Cloud Container Builder to build the
+# microservices in parallel and push them to Google Container Registry.
+steps:
+- id: compile
+  name: gcr.io/cloud-builders/go:alpine
+  env: 
+  - "PROJECT_ROOT=github.com/ahmetb/coffeelog"
+  - "CGO_ENABLED=0"
+  - "GOOS=linux"
+  - "GOARCH=amd64"
+  entrypoint: /bin/ash # we need this for the shell substitution below
+  args:
+  - '-c'
+  - >
+    /builder/go.ash install -v \
+      -a -tags netgo \
+      -ldflags="-w -X github.com/ahmetb/coffeelog/version.version=$(git describe --always --dirty)" \
+        ./web \
+        ./userdirectory \
+        ./coffeedirectory
+- name: gcr.io/cloud-builders/docker
+  waitFor: ['compile']
+  args: ['build', '-f=Dockerfile.web', '-t=gcr.io/$PROJECT_ID/web:$REVISION_ID', '.']
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '-f=Dockerfile.userdirectory', '-t=gcr.io/$PROJECT_ID/userdirectory:$REVISION_ID', '.']
+  waitFor: ['compile']
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '-f=Dockerfile.coffeedirectory', '-t=gcr.io/$PROJECT_ID/coffeedirectory:$REVISION_ID', '.']
+  waitFor: ['compile']
+images:
+  - 'gcr.io/$PROJECT_ID/web:$REVISION_ID'
+  - 'gcr.io/$PROJECT_ID/userdirectory:$REVISION_ID'
+  - 'gcr.io/$PROJECT_ID/coffeedirectory:$REVISION_ID'

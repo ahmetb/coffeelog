@@ -59,18 +59,12 @@ If you want to login to the app, create fake domain name in /etc/hosts, like cof
 and map the `minikube ip` to this hostname and update your OAuth2 configuration on
 Google API Manager to `http://coffee.io:32000/oauth2callback`.
 
-## Running on Google Container Enginer
+## Running on Google Container Engine
 
-Push your image to Google Container Registry
+TODO explain local building instructions
 
-    docker build -t gcr.io/<my-project>/coffee:latest
-    gcloud docker -- push gcr.io/<my-project>/coffee:latest
+TODO explain setting up cloud build
 
-or set up Continous Build for your Docker images:
-
-- TODO explain
-
-Update misc/deployment.yml with your image name.
 
 Deploy:
 

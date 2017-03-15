@@ -1,6 +1,7 @@
 # Project-specific
 .DS_Store
 .vscode
+gopath
 
 # Binaries for programs and plugins
 *.exe
