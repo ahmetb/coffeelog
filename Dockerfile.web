@@ -1,4 +1,7 @@
 FROM alpine
+RUN apk add --update ca-certificates && \
+      rm -rf /var/cache/apk/* /tmp/*
+
 COPY ./gopath/bin/web ./web
 COPY ./web/static ./static
 ENTRYPOINT ["./web"]
