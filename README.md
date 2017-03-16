@@ -20,11 +20,11 @@ test new DevOps technologies and features of Google Cloud Platform. It uses:
 
 1. a Google Cloud Platform project ID
 1. Create a Service Account with following roles and download the JSON key:
-  - Datastore User
-  - Storage Admin
+    - Datastore User
+    - Storage Admin
 1. Create an OAuth2 client and download the JSON key.
-  - Google Cloud Console &rarr; API Manager &rarr; Credentials &rarr; Create &rarr; OAuth client ID
-  - You can specify callback uri as `http://localhost/oauth2callback` and change later.
+    - Google Cloud Console &rarr; API Manager &rarr; Credentials &rarr; Create &rarr; OAuth client ID
+    - You can specify callback uri as `http://localhost/oauth2callback` and change later.
 
 ## Setup
 
@@ -100,12 +100,12 @@ deployment.yml, however, setting up continuous builds using [Google Cloud
 Container Builder][https://cloud.google.com/container-builder/] is a nicer
 solution:
 
-0. Go to Cloud Platform Console &rarr; Container Registry &rarr; Build Triggers
+1. Go to Cloud Platform Console &rarr; Container Registry &rarr; Build Triggers
    &rarr; Add Trigger
-0. Pick the GitHub repository (you can just fork this repo)
-0. Select the "cloudbuild.yml" option and specify the file path as that.
-0. Create the trigger (and trigger the first build manually)
-0. See if the image build succeeds.
+1. Pick the GitHub repository (you can just fork this repo)
+1. Select the "cloudbuild.yml" option and specify the file path as that.
+1. Create the trigger (and trigger the first build manually)
+1. See if the image build succeeds.
 
 Deploy manually:
 
