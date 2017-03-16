@@ -28,7 +28,7 @@
                     $('.amount-info').hide();
                 } else if (drinks[$(this).val()] == true) {
                     console.log($(this).val() + " = espresso");
-                    $("#amount").attr('min',1).attr('max',4).val(2);
+                    $("#amount").attr('min',0).attr('max',4).val(2);
                     $("#amount-unit-label").text("shots");
                     $("#amount-unit").val("shots");
                     $('.amount-info').show();
