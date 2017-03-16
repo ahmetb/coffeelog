@@ -37,6 +37,33 @@ If you are going to deploy on Kubernetes, add keys as secrets:
     kubectl create secret generic google-service-account --from-file=app_default_credentials.json=<path-to-file-on-disk>
     kubectl create secret generic oauth2 --from-file=client-secret.json=<path-to-file-on-disk>
 
+## Running locally without containers
+
+For quick dev-test cycle, you might want to just run it directly on your dev
+machine.
+
+```sh
+# make sure GOPATH is set and this repo is cloned to
+# src/github.com/ahmetb/coffeelog. cd in to this directory.
+
+export GOOGLE_APPLICATION_CREDENTIALS=<path-to-service-account-file>
+
+# Start user service
+go run ./userdirectory/*.go --addr=:8001 --google-project-id=<PROJECT> 
+
+# Start coffee/activity service
+go run ./coffeedirectory/*.go --addr=:8000 \
+     --user-directory-addr=:8001 \
+     --google-project-id=<PROJECT>
+
+# Start web frontend
+cd web # we need ./static directory to be present
+go run *.go --addr=:8000 --user-directory-addr=:8001 \
+    --coffee-directory-addr=:8002 \
+    --google-oauth2-config=<path-to-file> \
+    --google-project-id=<PROJECT>
+```
+
 ## Running locally on Minikube
 
     minikube start
@@ -44,7 +71,7 @@ If you are going to deploy on Kubernetes, add keys as secrets:
 Build the docker image on minikube node:
 
     eval $(minikube docker-env)
-    docker build -t gcr.io/ahmetb-starter/monoimage:latest .
+    make docker-images
 
 Deploy:
 
