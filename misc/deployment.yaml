@@ -4,6 +4,7 @@ kind: Deployment
 metadata:
   name: web-deployment
 spec:
+  revisionHistoryLimit: 5
   replicas: 3
   strategy:
     rollingUpdate:
@@ -37,9 +38,10 @@ spec:
           readOnly: true
         resources:
           requests:
-            cpu: 0.25
+            cpu: 100mi
             memory: 64Mi
           limits:
+            cpu: 300mi
             memory: 256Mi
         livenessProbe:
           initialDelaySeconds: 10
@@ -51,6 +53,7 @@ kind: Deployment
 metadata:
   name: userdirectory-deployment
 spec:
+  revisionHistoryLimit: 5
   replicas: 3
   strategy:
     rollingUpdate:
@@ -85,7 +88,7 @@ spec:
           value: /etc/secrets/app-credentials.json
         resources:
           requests:
-            cpu: 0.25
+            cpu: 100mi
             memory: 64Mi
           limits:
             memory: 256Mi
@@ -99,6 +102,7 @@ kind: Deployment
 metadata:
   name: coffeedirectory-deployment
 spec:
+  revisionHistoryLimit: 5
   replicas: 3
   strategy:
     rollingUpdate:
@@ -134,7 +138,7 @@ spec:
           value: /etc/secrets/app-credentials.json
         resources:
           requests:
-            cpu: 0.25
+            cpu: 100mi
             memory: 64Mi
           limits:
             memory: 256Mi
