@@ -4,7 +4,10 @@ kind: Deployment
 metadata:
   name: web-deployment
 spec:
-  replicas: 2
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 40%
   template:
     metadata:
       labels:
@@ -37,7 +40,6 @@ spec:
             cpu: 0.25
             memory: 64Mi
           limits:
-            cpu: 1.0
             memory: 256Mi
         livenessProbe:
           initialDelaySeconds: 10
@@ -50,6 +52,9 @@ metadata:
   name: userdirectory-deployment
 spec:
   replicas: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 40%
   template:
     metadata:
       labels:
@@ -83,7 +88,6 @@ spec:
             cpu: 0.25
             memory: 64Mi
           limits:
-            cpu: 1.0
             memory: 256Mi
         livenessProbe:
           initialDelaySeconds: 10
@@ -95,7 +99,10 @@ kind: Deployment
 metadata:
   name: coffeedirectory-deployment
 spec:
-  replicas: 2
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 40%
   template:
     metadata:
       labels:
@@ -130,7 +137,6 @@ spec:
             cpu: 0.25
             memory: 64Mi
           limits:
-            cpu: 1.0
             memory: 256Mi
         livenessProbe:
           initialDelaySeconds: 10
