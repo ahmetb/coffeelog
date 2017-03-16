@@ -137,7 +137,9 @@ func main() {
 	srv := http.Server{
 		Addr:    *addr, // TODO make configurable
 		Handler: r}
-	log.WithField("addr", *addr).Info("starting to listen on http")
+	log.WithFields(logrus.Fields{"addr": *addr,
+		"userdirectory":   *userDirectoryBackend,
+		"coffeedirectory": *coffeeDirectoryBackend}).Info("starting to listen on http")
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 

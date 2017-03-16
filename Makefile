@@ -16,5 +16,3 @@ binaries:
 	    $(patsubst %, ./%, $(BINARIES)) && \
 	rm -rf ${BIN_DIR} && mkdir -p ${BIN_DIR} && \
 	cp $(patsubst %, $$GOPATH/bin/linux_amd64/%, $(BINARIES)) ${BIN_DIR}
-
-PHONY: .docker-images

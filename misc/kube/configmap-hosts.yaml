@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hosts
+data:
+  coffeedirectory: coffeedirectory.default:80
+  userdirectory: userdirectory.default:80

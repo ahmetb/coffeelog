@@ -89,6 +89,8 @@ func main() {
 	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
 	pb.RegisterActivityDirectoryServer(grpcServer, svc)
 	log.WithFields(logrus.Fields{"addr": *addr,
-		"service": "coffeedirectory"}).Info("starting to listen on grpc")
+		"service":       "coffeedirectory",
+		"userdirectory": *userDirectoryBackend,
+	}).Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))
 }

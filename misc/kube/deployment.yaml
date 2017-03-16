@@ -28,10 +28,21 @@ spec:
         args:
         - "-addr=:8000"
         - "-google-oauth2-config=/etc/secrets/client-secret.json"
-        - "-user-directory-addr=userdirectory.default:80"
-        - "-coffee-directory-addr=coffeedirectory.default:80"
+        - "-user-directory-addr=$(USER_SVC_ADDR)"
+        - "-coffee-directory-addr=$(COFFEE_SVC_ADDR)"
         ports:
         - containerPort: 8000
+        env:
+        - name: USER_SVC_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: hosts
+              key: userdirectory
+        - name: COFFEE_SVC_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: hosts
+              key: coffeedirectory
         volumeMounts:
         - name: oauth-secrets
           mountPath: /etc/secrets
@@ -74,7 +85,7 @@ spec:
         image: gcr.io/ahmetb-starter/userdirectory:latest
         args:
         - "-addr=:8001"
-        - "-google-project-id=ahmetb-starter"
+        - "-google-project-id=$(GOOGLE_PROJECT_ID)"
         imagePullPolicy: IfNotPresent # minikube-only
         ports:
         - containerPort: 8001
@@ -85,6 +96,11 @@ spec:
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/secrets/app-credentials.json
+        - name: GOOGLE_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: project.id
         resources:
           requests:
             cpu: 100m
@@ -124,8 +140,8 @@ spec:
         imagePullPolicy: IfNotPresent # minikube-only
         args:
         - "-addr=:8002"
-        - "-user-directory-addr=userdirectory.default:80"
-        - "-google-project-id=ahmetb-starter"
+        - "-user-directory-addr=$(USER_SVC_ADDR)"
+        - "-google-project-id=$(GOOGLE_PROJECT_ID)"
         ports:
         - containerPort: 8002
         volumeMounts:
@@ -135,6 +151,16 @@ spec:
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: /etc/secrets/app-credentials.json
+        - name: USER_SVC_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: hosts
+              key: userdirectory
+        - name: GOOGLE_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: project.id
         resources:
           requests:
             cpu: 100m

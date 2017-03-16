@@ -37,6 +37,8 @@ If you are going to deploy on Kubernetes, add keys as secrets:
     kubectl create secret generic google-service-account --from-file=app_default_credentials.json=<path-to-file-on-disk>
     kubectl create secret generic oauth2 --from-file=client-secret.json=<path-to-file-on-disk>
 
+and update the `misc/kube/configmap-google.yaml` to your Google Cloud project ID.
+
 ## Running locally without containers
 
 For quick dev-test cycle, you might want to just run it directly on your dev
@@ -71,12 +73,11 @@ go run *.go --addr=:8000 --user-directory-addr=:8001 \
 Build the docker image on minikube node:
 
     eval $(minikube docker-env)
-    make docker-images
+    make
 
 Deploy:
 
-    kubectl apply -f misc/service.yml
-    kubectl apply -f misc/deployment.yml
+    kubectl apply -f misc/kube/
 
 (Do not forget to change the gcr.io image name in deployment.yml above.)
 
@@ -109,8 +110,7 @@ solution:
 
 Deploy manually:
 
-    kubectl apply -f misc/service.yml
-    kubectl apply -f misc/deployment.yml
+    kubectl apply -f misc/kube/
 
 (or use circle.yml to set up a CircleCI build to deploy the new version from
 source code automatically.)
