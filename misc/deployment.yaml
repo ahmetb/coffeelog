@@ -38,10 +38,9 @@ spec:
           readOnly: true
         resources:
           requests:
-            cpu: 100mi
+            cpu: 100m
             memory: 64Mi
           limits:
-            cpu: 300mi
             memory: 256Mi
         livenessProbe:
           initialDelaySeconds: 10
@@ -88,7 +87,7 @@ spec:
           value: /etc/secrets/app-credentials.json
         resources:
           requests:
-            cpu: 100mi
+            cpu: 100m
             memory: 64Mi
           limits:
             memory: 256Mi
@@ -138,7 +137,7 @@ spec:
           value: /etc/secrets/app-credentials.json
         resources:
           requests:
-            cpu: 100mi
+            cpu: 100m
             memory: 64Mi
           limits:
             memory: 256Mi
