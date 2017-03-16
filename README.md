@@ -78,22 +78,42 @@ Deploy:
     kubectl apply -f misc/service.yml
     kubectl apply -f misc/deployment.yml
 
-Find out minikube IP from `minikube ip` and application port from `kubectl get svc`.
-web-local service is configured to run on :32000. Head to http://ip:32000 to visit
-the application.
+(Do not forget to change the gcr.io image name in deployment.yml above.)
 
-If you want to login to the app, create fake domain name in /etc/hosts, like coffee.io
-and map the `minikube ip` to this hostname and update your OAuth2 configuration on
-Google API Manager to `http://coffee.io:32000/oauth2callback`.
+Find out minikube IP from `minikube ip` and application port from `kubectl get
+svc`. web-local service is configured to run on :32000. Head to http://ip:32000
+to visit the application.
+
+If you want to login to the app, create fake domain name in /etc/hosts, like
+coffee.io and map the `minikube ip` to this hostname and update your OAuth2
+configuration on Google API Manager to `http://coffee.io:32000/oauth2callback`.
 
 ## Running on Google Container Engine
 
-TODO explain local building instructions
+Make sure you have created a GKE cluster and obtained credentials:
 
-TODO explain setting up cloud build
+    gcloud container clusters create --zone us-central1-a coffee
+    gcloud container clusters get-credentials --zone us-central1-a coffee 
 
+You can directly push these images to your gcr.io space and edit image names in
+deployment.yml, however, setting up continuous builds using [Google Cloud
+Container Builder][https://cloud.google.com/container-builder/] is a nicer
+solution:
 
-Deploy:
+0. Go to Cloud Platform Console &rarr; Container Registry &rarr; Build Triggers
+   &rarr; Add Trigger
+0. Pick the GitHub repository (you can just fork this repo)
+0. Select the "cloudbuild.yml" option and specify the file path as that.
+0. Create the trigger (and trigger the first build manually)
+0. See if the image build succeeds.
+
+Deploy manually:
 
     kubectl apply -f misc/service.yml
     kubectl apply -f misc/deployment.yml
+
+(or use circle.yml to set up a CircleCI build to deploy the new version from
+source code automatically.)
+
+Find out the External IP address of the exposed service by using
+`kubectl get service/web` and visit the application at `http://IP`.
