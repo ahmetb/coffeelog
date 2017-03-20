@@ -1,5 +1,5 @@
 # Adopted from:
-# -https://github.com/circleci/docker-hello-google/blob/master/circle.yml
+# - https://github.com/circleci/docker-hello-google/blob/master/circle.yml
 # - https://circleci.com/docs/1.0/continuous-deployment-with-google-container-engine/
 machine:
   environment:

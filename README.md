@@ -13,6 +13,7 @@ test new DevOps technologies and features of Google Cloud Platform. It uses:
 - Google Cloud Storage
 - Kubernetes on Google Container Engine
 - Stackdriver Logging
+- Stackdriver Trace
 
 **Disclaimer:** This is not an official Google product.
 
@@ -91,15 +92,20 @@ configuration on Google API Manager to `http://coffee.io:32000/oauth2callback`.
 
 ## Running on Google Container Engine
 
+#### 1. Create a cluster
+
 Make sure you have created a GKE cluster and obtained credentials:
 
     gcloud container clusters create --zone us-central1-a coffee
     gcloud container clusters get-credentials --zone us-central1-a coffee 
 
-You can directly push these images to your gcr.io space and edit image names in
-deployment.yml, however, setting up continuous builds using [Google Cloud
-Container Builder][https://cloud.google.com/container-builder/] is a nicer
-solution:
+#### 2. Automate docker image builds
+
+You can use `make` to build the images and push to your gcr.io manually,
+however, setting up automated continuous builds using [Google Cloud Container
+Builder][cb] is a nicer solution:
+
+[cb]: https://cloud.google.com/container-builder/
 
 1. Go to Cloud Platform Console &rarr; Container Registry &rarr; Build Triggers
    &rarr; Add Trigger
@@ -108,12 +114,21 @@ solution:
 1. Create the trigger (and trigger the first build manually)
 1. See if the image build succeeds.
 
-Deploy manually:
+#### 3. Enable continous deployment
+
+Update `misc/kube/deployment.yml` with your `gcr.io/<project-id>`. Then deploy
+manually:
 
     kubectl apply -f misc/kube/
 
-(or use circle.yml to set up a CircleCI build to deploy the new version from
-source code automatically.)
+Or automate continuous deployment:
 
-Find out the External IP address of the exposed service by using
-`kubectl get service/web` and visit the application at `http://IP`.
+- [CircleCI](http://circleci.com) to deploy the new versions of `misc/kube/*`
+  from the source code automatically. (See circle.yml for that.)
+- [Google Container Builder][cb] can also run `kubectl apply`. However it is not
+  very pretty today.(TODO: explain more)
+
+#### 4. Try it
+
+Find out the External IP address of the exposed service by using `kubectl get
+service/web` and visit the application at `http://IP`.
