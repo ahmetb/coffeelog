@@ -21,18 +21,32 @@ spec:
           items:
           - key: client-secret.json
             path: client-secret.json
+      - name: google-cloud-secrets
+        secret:
+          secretName: google-service-account
+          items:
+          - key: app_default_credentials.json
+            path: app-credentials.json
       containers:
       - name: web
         image: gcr.io/ahmetb-starter/web:latest
         imagePullPolicy: IfNotPresent # minikube-only
         args:
         - "-addr=:8000"
-        - "-google-oauth2-config=/etc/secrets/client-secret.json"
+        - "-google-project-id=$(GOOGLE_PROJECT_ID)"
+        - "-google-oauth2-config=/etc/secrets/oauth/client-secret.json"
         - "-user-directory-addr=$(USER_SVC_ADDR)"
         - "-coffee-directory-addr=$(COFFEE_SVC_ADDR)"
         ports:
         - containerPort: 8000
         env:
+        - name: GOOGLE_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: project.id
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/secrets/google/app-credentials.json
         - name: USER_SVC_ADDR
           valueFrom:
             configMapKeyRef:
@@ -45,7 +59,10 @@ spec:
               key: coffeedirectory
         volumeMounts:
         - name: oauth-secrets
-          mountPath: /etc/secrets
+          mountPath: /etc/secrets/oauth
+          readOnly: true
+        - name: google-cloud-secrets
+          mountPath: /etc/secrets/google
           readOnly: true
         resources:
           requests:
@@ -74,7 +91,7 @@ spec:
         app: userdirectory
     spec:
       volumes:
-      - name: oauth-secrets
+      - name: google-cloud-secrets
         secret:
           secretName: google-service-account
           items:
@@ -90,12 +107,12 @@ spec:
         ports:
         - containerPort: 8001
         volumeMounts:
-        - name: oauth-secrets
-          mountPath: /etc/secrets
+        - name: google-cloud-secrets
+          mountPath: /etc/secrets/google
           readOnly: true
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /etc/secrets/app-credentials.json
+          value: /etc/secrets/google/app-credentials.json
         - name: GOOGLE_PROJECT_ID
           valueFrom:
             configMapKeyRef:
@@ -146,11 +163,11 @@ spec:
         - containerPort: 8002
         volumeMounts:
         - name: oauth-secrets
-          mountPath: /etc/secrets
+          mountPath: /etc/secrets/google
           readOnly: true
         env:
         - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /etc/secrets/app-credentials.json
+          value: /etc/secrets/google/app-credentials.json
         - name: USER_SVC_ADDR
           valueFrom:
             configMapKeyRef:
