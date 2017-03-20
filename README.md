@@ -54,7 +54,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=<path-to-service-account-file>
 go run ./userdirectory/*.go --addr=:8001 --google-project-id=<PROJECT> 
 
 # Start coffee/activity service
-go run ./coffeedirectory/*.go --addr=:8000 \
+go run ./coffeedirectory/*.go --addr=:8002 \
      --user-directory-addr=:8001 \
      --google-project-id=<PROJECT>
 
