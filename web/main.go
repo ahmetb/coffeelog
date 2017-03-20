@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/trace"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
 	"github.com/golang/protobuf/ptypes"
@@ -47,6 +48,7 @@ type server struct {
 	userSvc     pb.UserDirectoryClient
 	roasterSvc  pb.RoasterDirectoryClient
 	activitySvc pb.ActivityDirectoryClient
+	tc          *trace.Client
 }
 
 var (
@@ -79,6 +81,12 @@ func main() {
 	grpclog.SetLogger(log.WithField("facility", "grpc"))
 	sc.SetSerializer(securecookie.JSONEncoder{})
 
+	if env := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); env == "" {
+		log.Fatal("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set")
+	}
+	if *projectID == "" {
+		log.Fatal("google cloud project id flag not specified")
+	}
 	if *userDirectoryBackend == "" {
 		log.Fatal("user directory address flag not specified")
 	}
@@ -115,7 +123,18 @@ func main() {
 		coffeeSvcConn.Close()
 	}()
 
+	tc, err := trace.NewClient(context.Background(), *projectID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize trace client"))
+	}
+	sp, err := trace.NewLimitedSampler(1.0, 5)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to create sampling policy"))
+	}
+	tc.SetSamplingPolicy(sp)
+
 	s := &server{
+		tc:          tc,
 		cfg:         authConf,
 		userSvc:     pb.NewUserDirectoryClient(userSvcConn),
 		activitySvc: pb.NewActivityDirectoryClient(coffeeSvcConn),
@@ -125,15 +144,14 @@ func main() {
 	// set up server
 	r := mux.NewRouter()
 	r.PathPrefix("/static/").HandlerFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP)
-	r.HandleFunc("/", logHandler(s.home)).Methods(http.MethodGet)
-	r.HandleFunc("/login", logHandler(s.login)).Methods(http.MethodGet)
-	r.HandleFunc("/logout", logHandler(s.logout)).Methods(http.MethodGet)
-	r.HandleFunc("/oauth2callback", logHandler(s.oauth2Callback)).Methods(http.MethodGet)
-	r.HandleFunc("/coffee", logHandler(s.logCoffee)).Methods(http.MethodPost)
-	r.HandleFunc("/a/{id:[0-9]+}", logHandler(s.activity)).Methods(http.MethodGet)
-	r.HandleFunc("/u/{id:[0-9]+}", logHandler(s.userProfile)).Methods(http.MethodGet)
-	r.HandleFunc("/autocomplete/roaster", logHandler(s.autocompleteRoaster)).Methods(http.MethodGet)
-
+	r.Handle("/", s.traceHandler(logHandler(s.home))).Methods(http.MethodGet)
+	r.Handle("/login", s.traceHandler(logHandler(s.login))).Methods(http.MethodGet)
+	r.Handle("/logout", s.traceHandler(logHandler(s.logout))).Methods(http.MethodGet)
+	r.Handle("/oauth2callback", s.traceHandler(logHandler(s.oauth2Callback))).Methods(http.MethodGet)
+	r.Handle("/coffee", s.traceHandler(logHandler(s.logCoffee))).Methods(http.MethodPost)
+	r.Handle("/a/{id:[0-9]+}", s.traceHandler(logHandler(s.activity))).Methods(http.MethodGet)
+	r.Handle("/u/{id:[0-9]+}", s.traceHandler(logHandler(s.userProfile))).Methods(http.MethodGet)
+	r.Handle("/autocomplete/roaster", s.traceHandler(logHandler(s.autocompleteRoaster))).Methods(http.MethodGet)
 	srv := http.Server{
 		Addr:    *addr, // TODO make configurable
 		Handler: r}
@@ -143,33 +161,21 @@ func main() {
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
 }
 
-// logHandler wraps the HTTP handler with logging.
-func logHandler(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		e := log.WithFields(logrus.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-		})
-		e.Debug("request accepted")
-		start := time.Now()
-		defer func() {
-			e.WithFields(logrus.Fields{
-				"elapsed": time.Now().Sub(start).String(),
-			}).Debug("request completed")
-		}()
-		h(w, r)
-	}
-}
-
 type httpErrorWriter func(http.ResponseWriter, error)
 
-func (s *server) getUser(id string) (*pb.UserResponse, error) {
-	userResp, err := s.userSvc.GetUser(context.TODO(),
-		&pb.UserRequest{ID: id})
+func (s *server) getUser(ctx context.Context, id string) (*pb.UserResponse, error) {
+	span := trace.FromContext(ctx).NewChild("get_user")
+	span.SetLabel("user/id", id)
+	defer span.Finish()
+
+	userResp, err := s.userSvc.GetUser(ctx, &pb.UserRequest{ID: id})
 	return userResp, err
 }
 
-func (s *server) authUser(r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
+func (s *server) authUser(ctx context.Context, r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
+	span := trace.FromContext(ctx).NewChild("authorize_user")
+	defer span.Finish()
+
 	c, err := r.Cookie("user")
 	if err == http.ErrNoCookie {
 		return nil, nil, nil
@@ -180,7 +186,7 @@ func (s *server) authUser(r *http.Request) (user *pb.User, errFunc httpErrorWrit
 		return nil, badRequest, errors.Wrap(err, "failed to decode cookie")
 	}
 
-	userResp, err := s.getUser(userID)
+	userResp, err := s.getUser(ctx, userID)
 	if err != nil {
 		return nil, serverError, errors.Wrap(err, "failed to look up the user")
 	} else if !userResp.GetFound() {
@@ -190,7 +196,9 @@ func (s *server) authUser(r *http.Request) (user *pb.User, errFunc httpErrorWrit
 }
 
 func (s *server) home(w http.ResponseWriter, r *http.Request) {
-	user, errF, err := s.authUser(r)
+	ctx := r.Context()
+
+	user, errF, err := s.authUser(ctx, r)
 	if err != nil {
 		errF(w, err)
 		return
@@ -233,6 +241,8 @@ func (s *server) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	span := trace.FromContext(ctx)
 	if state := r.URL.Query().Get("state"); state != "todo_rand_state" {
 		badRequest(w, errors.New("wrong oauth2 state"))
 		return
@@ -244,13 +254,16 @@ func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tok, err := s.cfg.Exchange(oauth2.NoContext, code)
+	cs := span.NewChild("oauth2/exchange_token")
+	tok, err := s.cfg.Exchange(ctx, code)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "oauth2 token exchange failed"))
 		return
 	}
+	cs.Finish()
 
-	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, s.cfg.TokenSource(oauth2.NoContext, tok)))
+	cs = span.NewChild("gplus/get/me")
+	svc, err := plus.New(oauth2.NewClient(ctx, s.cfg.TokenSource(ctx, tok)))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to construct g+ client"))
 		return
@@ -260,9 +273,11 @@ func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		serverError(w, errors.Wrap(err, "failed to query user g+ profile"))
 		return
 	}
+	cs.Finish()
 	log.WithField("google.id", me.Id).Debug("retrieved google user")
 
-	user, err := s.userSvc.AuthorizeGoogle(context.TODO(),
+	cs = span.NewChild("authorize_google")
+	user, err := s.userSvc.AuthorizeGoogle(ctx,
 		&pb.GoogleUser{
 			ID:          me.Id,
 			Email:       me.Emails[0].Value,
@@ -274,6 +289,7 @@ func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.WithField("id", user.ID).Info("authenticated user with google")
+	cs.Finish()
 
 	// save the user id to cookies
 	// TODO implement as sessions
@@ -295,7 +311,9 @@ func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) logCoffee(w http.ResponseWriter, r *http.Request) {
-	user, errF, err := s.authUser(r)
+	ctx := r.Context()
+
+	user, errF, err := s.authUser(ctx, r)
 	if err != nil {
 		errF(w, err)
 		return
@@ -385,7 +403,7 @@ func (s *server) logCoffee(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		serverError(w, errors.Wrap(err, "cannot convert timestamp to proto"))
 	}
-	resp, err := s.activitySvc.PostActivity(context.TODO(), &pb.PostActivityRequest{
+	resp, err := s.activitySvc.PostActivity(ctx, &pb.PostActivityRequest{
 		UserID: user.GetID(),
 		Date:   ts,
 		Amount: &pb.Activity_DrinkAmount{
@@ -411,17 +429,21 @@ func (s *server) logCoffee(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	span := trace.FromContext(ctx)
+
 	q := r.URL.Query().Get("data")
 	if len(q) > 100 {
 		badRequest(w, errors.New("request too long"))
 		return
 	}
+	span.SetLabel("q", q)
 
 	type result struct {
 		Value string `json:"value"`
 	}
 
-	resp, err := s.roasterSvc.ListRoasters(context.TODO(), new(pb.RoastersRequest))
+	resp, err := s.roasterSvc.ListRoasters(ctx, new(pb.RoastersRequest))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to query the roasters"))
 		return
@@ -444,7 +466,10 @@ func (s *server) autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) activity(w http.ResponseWriter, r *http.Request) {
-	user, ef, err := s.authUser(r)
+	ctx := r.Context()
+	span := trace.FromContext(ctx)
+
+	user, ef, err := s.authUser(ctx, r)
 	if err != nil {
 		ef(w, err)
 		return
@@ -460,12 +485,15 @@ func (s *server) activity(w http.ResponseWriter, r *http.Request) {
 	e := log.WithField("id", id)
 	e.Debug("activity requested")
 
-	ar, err := s.activitySvc.GetActivity(context.TODO(), &pb.ActivityRequest{ID: id})
+	cs := span.NewChild("get_activity")
+	cs.SetLabel("id", idS)
+	ar, err := s.activitySvc.GetActivity(ctx, &pb.ActivityRequest{ID: id})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "cannot get activity"))
 		return
 	}
 	e.WithField("user.id", ar.GetUser().GetID()).Debug("retrieved activity")
+	cs.Finish()
 
 	tmpl := template.Must(template.ParseFiles(
 		filepath.Join("static", "template", "layout.html"),
@@ -479,15 +507,18 @@ func (s *server) activity(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) userProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	span := trace.FromContext(ctx)
 	userID := mux.Vars(r)["id"]
+	span.SetLabel("user/id", userID)
 
-	me, ef, err := s.authUser(r)
+	me, ef, err := s.authUser(ctx, r)
 	if err != nil {
 		ef(w, err)
 		return
 	}
 
-	userResp, err := s.getUser(userID)
+	userResp, err := s.getUser(ctx, userID)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to look up the user"))
 		return
@@ -496,12 +527,15 @@ func (s *server) userProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ar, err := s.activitySvc.GetUserActivities(context.TODO(),
+	cs := span.NewChild("get_activities")
+	cs.SetLabel("user/id", userID)
+	ar, err := s.activitySvc.GetUserActivities(ctx,
 		&pb.UserActivitiesRequest{UserID: userID})
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to query activities"))
 		return
 	}
+	cs.Finish()
 
 	tmpl := template.Must(template.ParseFiles(
 		filepath.Join("static", "template", "layout.html"),
