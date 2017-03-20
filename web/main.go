@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/trace"
+	"cloud.google.com/go/trace/traceutil"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
 	"github.com/golang/protobuf/ptypes"
@@ -144,15 +145,14 @@ func main() {
 	// set up server
 	r := mux.NewRouter()
 	r.PathPrefix("/static/").HandlerFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP)
-	r.HandleFunc("/", logHandler(s.traceHandler(s.home))).Methods(http.MethodGet)
-	r.HandleFunc("/login", logHandler(s.traceHandler(s.login))).Methods(http.MethodGet)
-	r.HandleFunc("/logout", logHandler(s.traceHandler(s.logout))).Methods(http.MethodGet)
-	r.HandleFunc("/oauth2callback", logHandler(s.traceHandler(s.oauth2Callback))).Methods(http.MethodGet)
-	r.HandleFunc("/coffee", logHandler(s.traceHandler(s.logCoffee))).Methods(http.MethodPost)
-	r.HandleFunc("/a/{id:[0-9]+}", logHandler(s.traceHandler(s.activity))).Methods(http.MethodGet)
-	r.HandleFunc("/u/{id:[0-9]+}", logHandler(s.traceHandler(s.userProfile))).Methods(http.MethodGet)
-	r.HandleFunc("/autocomplete/roaster", logHandler(s.traceHandler(s.autocompleteRoaster))).Methods(http.MethodGet)
-
+	r.Handle("/", traceutil.HTTPHandler(tc, logHandler(s.home))).Methods(http.MethodGet)
+	r.Handle("/login", traceutil.HTTPHandler(tc, logHandler(s.login))).Methods(http.MethodGet)
+	r.Handle("/logout", traceutil.HTTPHandler(tc, logHandler(s.logout))).Methods(http.MethodGet)
+	r.Handle("/oauth2callback", traceutil.HTTPHandler(tc, logHandler(s.oauth2Callback))).Methods(http.MethodGet)
+	r.Handle("/coffee", traceutil.HTTPHandler(tc, logHandler(s.logCoffee))).Methods(http.MethodPost)
+	r.Handle("/a/{id:[0-9]+}", traceutil.HTTPHandler(tc, logHandler(s.activity))).Methods(http.MethodGet)
+	r.Handle("/u/{id:[0-9]+}", traceutil.HTTPHandler(tc, logHandler(s.userProfile))).Methods(http.MethodGet)
+	r.Handle("/autocomplete/roaster", traceutil.HTTPHandler(tc, logHandler(s.autocompleteRoaster))).Methods(http.MethodGet)
 	srv := http.Server{
 		Addr:    *addr, // TODO make configurable
 		Handler: r}
@@ -163,7 +163,7 @@ func main() {
 }
 
 // logHandler wraps the HTTP handler with logging.
-func logHandler(h http.HandlerFunc) http.HandlerFunc {
+func logHandler(h func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		e := log.WithFields(logrus.Fields{
 			"method": r.Method,
@@ -180,32 +180,19 @@ func logHandler(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// traceHandler decorates HandlerFunc with context that contains the trace span
-// and automatically closes the span after the request is handled.
-func (s *server) traceHandler(h func(context.Context, http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		span := s.tc.SpanFromRequest(r)
-		defer span.Finish()
-
-		ctx := trace.NewContext(context.Background(), span)
-		h(ctx, w, r)
-	}
-}
-
 type httpErrorWriter func(http.ResponseWriter, error)
 
 func (s *server) getUser(ctx context.Context, id string) (*pb.UserResponse, error) {
-	span := trace.FromContext(ctx)
+	span := trace.FromContext(ctx).NewChild("get_user")
 	span.SetLabel("user/id", id)
 	defer span.Finish()
 
-	userResp, err := s.userSvc.GetUser(ctx,
-		&pb.UserRequest{ID: id})
+	userResp, err := s.userSvc.GetUser(ctx, &pb.UserRequest{ID: id})
 	return userResp, err
 }
 
 func (s *server) authUser(ctx context.Context, r *http.Request) (user *pb.User, errFunc httpErrorWriter, err error) {
-	span := trace.FromContext(ctx)
+	span := trace.FromContext(ctx).NewChild("authorize_user")
 	defer span.Finish()
 
 	c, err := r.Cookie("user")
@@ -218,7 +205,7 @@ func (s *server) authUser(ctx context.Context, r *http.Request) (user *pb.User, 
 		return nil, badRequest, errors.Wrap(err, "failed to decode cookie")
 	}
 
-	userResp, err := s.getUser(trace.NewContext(ctx, span.NewChild("retrieve_user")), userID)
+	userResp, err := s.getUser(ctx, userID)
 	if err != nil {
 		return nil, serverError, errors.Wrap(err, "failed to look up the user")
 	} else if !userResp.GetFound() {
@@ -227,10 +214,10 @@ func (s *server) authUser(ctx context.Context, r *http.Request) (user *pb.User, 
 	return userResp.GetUser(), nil, nil
 }
 
-func (s *server) home(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	span := trace.FromContext(ctx)
+func (s *server) home(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-	user, errF, err := s.authUser(trace.NewContext(ctx, span.NewChild("authenticate_user")), r)
+	user, errF, err := s.authUser(ctx, r)
 	if err != nil {
 		errF(w, err)
 		return
@@ -251,7 +238,7 @@ func (s *server) home(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (s *server) login(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *server) login(w http.ResponseWriter, r *http.Request) {
 	s.cfg.RedirectURL = "http://" + r.Host + "/oauth2callback" // TODO this is hacky
 	s.cfg.Scopes = []string{"profile", "email"}
 	url := s.cfg.AuthCodeURL("todo_rand_state",
@@ -261,7 +248,7 @@ func (s *server) login(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusFound)
 }
 
-func (s *server) logout(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *server) logout(w http.ResponseWriter, r *http.Request) {
 	log.Debug("logout requested")
 	for _, c := range r.Cookies() {
 		c.Expires = time.Unix(1, 0)
@@ -272,7 +259,8 @@ func (s *server) logout(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusFound)
 }
 
-func (s *server) oauth2Callback(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *server) oauth2Callback(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	span := trace.FromContext(ctx)
 	if state := r.URL.Query().Get("state"); state != "todo_rand_state" {
 		badRequest(w, errors.New("wrong oauth2 state"))
@@ -286,7 +274,7 @@ func (s *server) oauth2Callback(ctx context.Context, w http.ResponseWriter, r *h
 	}
 
 	cs := span.NewChild("oauth2/exchange_token")
-	tok, err := s.cfg.Exchange(oauth2.NoContext, code)
+	tok, err := s.cfg.Exchange(ctx, code)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "oauth2 token exchange failed"))
 		return
@@ -294,7 +282,7 @@ func (s *server) oauth2Callback(ctx context.Context, w http.ResponseWriter, r *h
 	cs.Finish()
 
 	cs = span.NewChild("gplus/get/me")
-	svc, err := plus.New(oauth2.NewClient(oauth2.NoContext, s.cfg.TokenSource(oauth2.NoContext, tok)))
+	svc, err := plus.New(oauth2.NewClient(ctx, s.cfg.TokenSource(ctx, tok)))
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to construct g+ client"))
 		return
@@ -341,10 +329,10 @@ func (s *server) oauth2Callback(ctx context.Context, w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusFound)
 }
 
-func (s *server) logCoffee(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	span := trace.FromContext(ctx)
+func (s *server) logCoffee(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-	user, errF, err := s.authUser(trace.NewContext(ctx, span.NewChild("authorize_user")), r)
+	user, errF, err := s.authUser(ctx, r)
 	if err != nil {
 		errF(w, err)
 		return
@@ -459,7 +447,8 @@ func (s *server) logCoffee(ctx context.Context, w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusFound)
 }
 
-func (s *server) autocompleteRoaster(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *server) autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	span := trace.FromContext(ctx)
 
 	q := r.URL.Query().Get("data")
@@ -495,10 +484,11 @@ func (s *server) autocompleteRoaster(ctx context.Context, w http.ResponseWriter,
 		"matches": len(v)}).Debug("autocomplete response")
 }
 
-func (s *server) activity(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *server) activity(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	span := trace.FromContext(ctx)
 
-	user, ef, err := s.authUser(trace.NewContext(ctx, span.NewChild("authorize_user")), r)
+	user, ef, err := s.authUser(ctx, r)
 	if err != nil {
 		ef(w, err)
 		return
@@ -535,18 +525,19 @@ func (s *server) activity(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (s *server) userProfile(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (s *server) userProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	span := trace.FromContext(ctx)
 	userID := mux.Vars(r)["id"]
 	span.SetLabel("user/id", userID)
 
-	me, ef, err := s.authUser(trace.NewContext(ctx, span.NewChild("authorize_user")), r)
+	me, ef, err := s.authUser(ctx, r)
 	if err != nil {
 		ef(w, err)
 		return
 	}
 
-	userResp, err := s.getUser(trace.NewContext(ctx, span.NewChild("get_user")), userID)
+	userResp, err := s.getUser(ctx, userID)
 	if err != nil {
 		serverError(w, errors.Wrap(err, "failed to look up the user"))
 		return

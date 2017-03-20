@@ -63,6 +63,12 @@
 			"revisionTime": "2017-03-17T01:54:53Z"
 		},
 		{
+			"checksumSHA1": "XfM/qyWID7VdNhlhw6/Ge/GVbG8=",
+			"path": "cloud.google.com/go/trace/traceutil",
+			"revision": "79e496b9cf3b787d4a221f2901549f0033f78519",
+			"revisionTime": "2017-03-19T22:53:36Z"
+		},
+		{
 			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
