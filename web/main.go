@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/trace"
-	"cloud.google.com/go/trace/traceutil"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
 	"github.com/golang/protobuf/ptypes"
@@ -145,14 +144,14 @@ func main() {
 	// set up server
 	r := mux.NewRouter()
 	r.PathPrefix("/static/").HandlerFunc(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP)
-	r.Handle("/", traceutil.HTTPHandler(tc, logHandler(s.home))).Methods(http.MethodGet)
-	r.Handle("/login", traceutil.HTTPHandler(tc, logHandler(s.login))).Methods(http.MethodGet)
-	r.Handle("/logout", traceutil.HTTPHandler(tc, logHandler(s.logout))).Methods(http.MethodGet)
-	r.Handle("/oauth2callback", traceutil.HTTPHandler(tc, logHandler(s.oauth2Callback))).Methods(http.MethodGet)
-	r.Handle("/coffee", traceutil.HTTPHandler(tc, logHandler(s.logCoffee))).Methods(http.MethodPost)
-	r.Handle("/a/{id:[0-9]+}", traceutil.HTTPHandler(tc, logHandler(s.activity))).Methods(http.MethodGet)
-	r.Handle("/u/{id:[0-9]+}", traceutil.HTTPHandler(tc, logHandler(s.userProfile))).Methods(http.MethodGet)
-	r.Handle("/autocomplete/roaster", traceutil.HTTPHandler(tc, logHandler(s.autocompleteRoaster))).Methods(http.MethodGet)
+	r.Handle("/", s.traceHandler(logHandler(s.home))).Methods(http.MethodGet)
+	r.Handle("/login", s.traceHandler(logHandler(s.login))).Methods(http.MethodGet)
+	r.Handle("/logout", s.traceHandler(logHandler(s.logout))).Methods(http.MethodGet)
+	r.Handle("/oauth2callback", s.traceHandler(logHandler(s.oauth2Callback))).Methods(http.MethodGet)
+	r.Handle("/coffee", s.traceHandler(logHandler(s.logCoffee))).Methods(http.MethodPost)
+	r.Handle("/a/{id:[0-9]+}", s.traceHandler(logHandler(s.activity))).Methods(http.MethodGet)
+	r.Handle("/u/{id:[0-9]+}", s.traceHandler(logHandler(s.userProfile))).Methods(http.MethodGet)
+	r.Handle("/autocomplete/roaster", s.traceHandler(logHandler(s.autocompleteRoaster))).Methods(http.MethodGet)
 	srv := http.Server{
 		Addr:    *addr, // TODO make configurable
 		Handler: r}
@@ -160,24 +159,6 @@ func main() {
 		"userdirectory":   *userDirectoryBackend,
 		"coffeedirectory": *coffeeDirectoryBackend}).Info("starting to listen on http")
 	log.Fatal(errors.Wrap(srv.ListenAndServe(), "failed to listen/serve"))
-}
-
-// logHandler wraps the HTTP handler with logging.
-func logHandler(h func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		e := log.WithFields(logrus.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-		})
-		e.Debug("request accepted")
-		start := time.Now()
-		defer func() {
-			e.WithFields(logrus.Fields{
-				"elapsed": time.Now().Sub(start).String(),
-			}).Debug("request completed")
-		}()
-		h(w, r)
-	}
 }
 
 type httpErrorWriter func(http.ResponseWriter, error)
