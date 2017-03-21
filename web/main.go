@@ -118,8 +118,8 @@ func main() {
 		userSvcConn.Close()
 	}()
 	coffeeSvcConn, err := grpc.Dial(*coffeeDirectoryBackend,
-		intercept.EnableGRPCTracingDialOption,
-		grpc.WithInsecure())
+		grpc.WithInsecure(),
+		intercept.EnableGRPCTracingDialOption)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect coffee service"))
 	}
@@ -170,9 +170,11 @@ type httpErrorWriter func(http.ResponseWriter, error)
 
 func (s *server) getUser(ctx context.Context, id string) (*pb.UserResponse, error) {
 	span := trace.FromContext(ctx).NewChild("get_user")
-	span.SetLabel("user/id", id)
 	defer span.Finish()
+	span.SetLabel("user/id", id)
 
+	cs := span.NewChild("rpc.Sent/GetUser")
+	defer cs.Finish()
 	userResp, err := s.userSvc.GetUser(ctx, &pb.UserRequest{ID: id})
 	return userResp, err
 }
@@ -454,6 +456,8 @@ func (s *server) autocompleteRoaster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cs := span.NewChild("filter")
+	defer cs.Finish()
 	var v []result
 	q = strings.ToLower(q)
 	for _, r := range resp.GetResults() {

@@ -27,7 +27,8 @@ func (p *proxyResponseWriter) Write(b []byte) (int, error) {
 }
 
 // traceHandler wraps the HTTP handler with tracing that automatically finishes
-// the span. It adds additional fields to the trace span about the response.
+// the span. It adds additional fields to the trace span about the response and
+// adds correlation header to th
 func (s *server) traceHandler(h func(http.ResponseWriter, *http.Request)) http.Handler {
 	return traceutil.HTTPHandler(s.tc, func(w http.ResponseWriter, r *http.Request) {
 		ww := &proxyResponseWriter{w: w}
@@ -37,10 +38,12 @@ func (s *server) traceHandler(h func(http.ResponseWriter, *http.Request)) http.H
 			if code == 0 {
 				code = http.StatusOK
 			}
-			span.SetLabel("http/returned_status_code", fmt.Sprint(code))
-			span.SetLabel("http/returned_content_length", fmt.Sprint(ww.length))
+			span.SetLabel("http/resp/status_code", fmt.Sprint(code))
+			span.SetLabel("http/resp/content_length", fmt.Sprint(ww.length))
+			span.SetLabel("http/req/id", span.TraceID())
 			span.Finish()
 		}()
+		ww.Header().Set("X-Cloud-Trace-Context", span.TraceID())
 		h(ww, r)
 	})
 }
@@ -49,8 +52,9 @@ func (s *server) traceHandler(h func(http.ResponseWriter, *http.Request)) http.H
 func logHandler(h func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		e := log.WithFields(logrus.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
+			"method":     r.Method,
+			"path":       r.URL.Path,
+			"request.id": trace.FromContext(r.Context()).TraceID(),
 		})
 		e.Debug("request accepted")
 		start := time.Now()
