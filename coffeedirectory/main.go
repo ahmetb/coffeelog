@@ -22,8 +22,10 @@ import (
 	"flag"
 
 	"cloud.google.com/go/datastore"
+	"cloud.google.com/go/trace"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
+	"github.com/harlow/grpc-google-cloud-trace/intercept"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -70,12 +72,9 @@ func main() {
 	}
 	defer ds.Close()
 
-	lis, err := net.Listen("tcp", *addr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cc, err := grpc.Dial(*userDirectoryBackend, grpc.WithInsecure())
+	cc, err := grpc.Dial(*userDirectoryBackend,
+		grpc.WithInsecure(),
+		intercept.EnableGRPCTracingDialOption)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to contact user directory"))
 	}
@@ -84,7 +83,21 @@ func main() {
 		cc.Close()
 	}()
 
-	grpcServer := grpc.NewServer()
+	tc, err := trace.NewClient(ctx, *projectID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize tracing client"))
+	}
+	ts, err := trace.NewLimitedSampler(1.0, 10)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize sampling policy"))
+	}
+	tc.SetSamplingPolicy(ts)
+
+	lis, err := net.Listen("tcp", *addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	grpcServer := grpc.NewServer(intercept.EnableGRPCTracingServerOption(tc))
 	svc := &service{ds, pb.NewUserDirectoryClient(cc)}
 	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
 	pb.RegisterActivityDirectoryServer(grpcServer, svc)

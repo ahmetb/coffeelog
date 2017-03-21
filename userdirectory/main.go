@@ -21,9 +21,10 @@ import (
 	"os"
 
 	"cloud.google.com/go/datastore"
-
+	"cloud.google.com/go/trace"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
+	"github.com/harlow/grpc-google-cloud-trace/intercept"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -67,11 +68,21 @@ func main() {
 	}
 	defer ds.Close()
 
+	tc, err := trace.NewClient(ctx, *projectID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize tracing client"))
+	}
+	ts, err := trace.NewLimitedSampler(1.0, 10)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize sampling policy"))
+	}
+	tc.SetSamplingPolicy(ts)
+
 	lis, err := net.Listen("tcp", *addr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(intercept.EnableGRPCTracingServerOption(tc))
 	pb.RegisterUserDirectoryServer(grpcServer, &userDirectory{ds})
 	log.WithField("addr", *addr).Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))

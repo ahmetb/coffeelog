@@ -35,6 +35,7 @@ import (
 	plus "github.com/google/google-api-go-client/plus/v1"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
+	"github.com/harlow/grpc-google-cloud-trace/intercept"
 	"github.com/pkg/errors"
 	logrus "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -106,7 +107,9 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to parse config file"))
 	}
 
-	userSvcConn, err := grpc.Dial(*userDirectoryBackend, grpc.WithInsecure())
+	userSvcConn, err := grpc.Dial(*userDirectoryBackend,
+		grpc.WithInsecure(),
+		intercept.EnableGRPCTracingDialOption)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect user service"))
 	}
@@ -114,7 +117,9 @@ func main() {
 		log.Info("closing connection to user directory")
 		userSvcConn.Close()
 	}()
-	coffeeSvcConn, err := grpc.Dial(*coffeeDirectoryBackend, grpc.WithInsecure())
+	coffeeSvcConn, err := grpc.Dial(*coffeeDirectoryBackend,
+		intercept.EnableGRPCTracingDialOption,
+		grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect coffee service"))
 	}

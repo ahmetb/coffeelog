@@ -21,6 +21,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/storage"
+	"cloud.google.com/go/trace"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
@@ -104,6 +105,9 @@ func (v *activity) ToProto(u *pb.User) (*pb.Activity, error) {
 }
 
 func (c *service) GetRoaster(ctx context.Context, req *pb.RoasterRequest) (*pb.RoasterResponse, error) {
+	span := trace.FromContext(ctx).NewChild("datastore/roaster/query/by_id")
+	defer span.Finish()
+
 	e := log.WithField("q.id", req.GetID()).WithField("q.name", req.GetName())
 	e.Debug("querying roaster")
 	q := datastore.NewQuery(kindRoaster)
@@ -124,13 +128,20 @@ func (c *service) GetRoaster(ctx context.Context, req *pb.RoasterRequest) (*pb.R
 }
 
 func (c *service) CreateRoaster(ctx context.Context, req *pb.RoasterCreateRequest) (*pb.Roaster, error) {
+	span := trace.FromContext(ctx).NewChild("coffeesvc/CreateRoaster")
+	defer span.Finish()
+
+	cs := span.NewChild("datastore/roaster/put")
 	k, err := c.ds.Put(ctx, datastore.IncompleteKey(kindRoaster, nil), &roaster{
 		Name: req.Name})
 	if err != nil {
 		log.WithField("error", err).Error("failed to insert to datastore")
 		return new(pb.Roaster), errors.New("failed to save the roaster")
 	}
+	cs.Finish()
 
+	cs = span.NewChild("datastore/roaster/get/by_id")
+	defer cs.Finish()
 	r, err := c.GetRoaster(ctx, &pb.RoasterRequest{Query: &pb.RoasterRequest_ID{ID: k.ID}})
 	if err != nil {
 		log.WithField("error", err).Error("failed to query the saved roaster")
@@ -143,6 +154,9 @@ func (c *service) CreateRoaster(ctx context.Context, req *pb.RoasterCreateReques
 }
 
 func (c *service) ListRoasters(ctx context.Context, _ *pb.RoastersRequest) (*pb.RoastersResponse, error) {
+	span := trace.FromContext(ctx).NewChild("datastore/roaster/list")
+	defer span.Finish()
+
 	resp := new(pb.RoastersResponse)
 
 	var data []roaster
@@ -161,6 +175,9 @@ func (c *service) ListRoasters(ctx context.Context, _ *pb.RoastersRequest) (*pb.
 }
 
 func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest) (*pb.PostActivityResponse, error) {
+	span := trace.FromContext(ctx).NewChild("coffeesvc/PostActivity")
+	defer span.Finish()
+
 	// resolve the roaster
 	e := log.WithField("roaster.name", req.GetRoasterName())
 	e.Debug("resolving roaster for activity")
@@ -210,16 +227,23 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 		Notes:       req.GetNotes(),
 		PictureURL:  picURL,
 	}
+
+	cs := span.NewChild("datastore/activity/put")
+	defer cs.Finish()
 	k, err := c.ds.Put(ctx, datastore.IncompleteKey(kindActivity, nil), &v)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to save activity")
 	}
 
+	span.SetLabel("activity/id", fmt.Sprint(k.ID))
 	log.WithField("id", k.ID).Info("activity saved to datastore")
 	return &pb.PostActivityResponse{ID: k.ID}, nil
 }
 
 func uploadPicture(ctx context.Context, filename, contentType string, b []byte) (string, error) {
+	span := trace.FromContext(ctx).NewChild("gcs/upload")
+	defer span.Finish()
+
 	t := time.Now()
 	cl, err := storage.NewClient(ctx)
 	if err != nil {
@@ -241,6 +265,7 @@ func uploadPicture(ctx context.Context, filename, contentType string, b []byte) 
 }
 
 func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb.Activity, error) {
+	span := trace.FromContext(ctx).NewChild("coffeesvc/GetActivity")
 	var v activity
 	if err := c.ds.Get(ctx, datastore.IDKey(kindActivity, req.GetID(), nil), &v); err == datastore.ErrNoSuchEntity {
 		return nil, errors.New("activity not found")
@@ -248,7 +273,9 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 		return nil, errors.Wrap(err, "error querying datastore for activity")
 	}
 
-	user, err := c.userSvc.GetUser(ctx, &pb.UserRequest{ID: v.UserID})
+	cs := span.NewChild("rpc.sent/GetUser")
+	defer cs.Finish()
+	user, err := c.userSvc.GetUser(trace.NewContext(ctx, cs), &pb.UserRequest{ID: v.UserID})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to retrieve activity owner")
 	}
@@ -261,20 +288,26 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 }
 
 func (c *service) GetUserActivities(ctx context.Context, req *pb.UserActivitiesRequest) (*pb.UserActivitiesResponse, error) {
+	span := trace.FromContext(ctx).NewChild("coffeesvc/GetActivities")
+	span.SetLabel("user/id", req.GetUserID())
 	log.WithField("user.id", req.GetUserID()).Debug("querying datastore for activities")
 
-	user, err := c.userSvc.GetUser(ctx, &pb.UserRequest{ID: req.GetUserID()})
+	cs := span.NewChild("rpc.sent/GetUser")
+	user, err := c.userSvc.GetUser(trace.NewContext(ctx, cs), &pb.UserRequest{ID: req.GetUserID()})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to retrieve user profile")
 	}
 	if !user.GetFound() {
 		return nil, errors.Wrap(err, "user does not exist")
 	}
+	cs.Finish()
 
+	cs = span.NewChild("datastore/activity/list")
 	var v []activity
 	if _, err := c.ds.GetAll(ctx, datastore.NewQuery(kindActivity).Filter("UserID =", req.GetUserID()).Order("-Date"), &v); err != nil {
 		return nil, errors.Wrap(err, "failed to query datastore for user activities")
 	}
+	cs.Finish()
 
 	var res []*pb.Activity
 	for _, a := range v {

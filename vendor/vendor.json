@@ -123,6 +123,18 @@
 			"revisionTime": "2016-11-07T00:24:06Z"
 		},
 		{
+			"checksumSHA1": "HKw3eJN92ez7eHh01MD7QFEZ1gg=",
+			"path": "github.com/harlow/grpc-google-cloud-trace",
+			"revision": "50cddeb62ce6e510266986eb28297a136782babd",
+			"revisionTime": "2017-03-08T17:03:29Z"
+		},
+		{
+			"checksumSHA1": "PUQk5sO+3kIdnlQzkmwxZrVKxSk=",
+			"path": "github.com/harlow/grpc-google-cloud-trace/intercept",
+			"revision": "50cddeb62ce6e510266986eb28297a136782babd",
+			"revisionTime": "2017-03-08T17:03:29Z"
+		},
+		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",
 			"path": "github.com/pkg/errors",
 			"revision": "248dadf4e9068a0b3e79f02ed0a610d935de5302",
