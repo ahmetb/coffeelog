@@ -57,10 +57,10 @@
 			"revisionTime": "2017-02-23T18:50:28Z"
 		},
 		{
-			"checksumSHA1": "gyzvIMJ1iS/YCHdSy6kAavaXry4=",
+			"checksumSHA1": "vqn32bBy11KPFfq0QToO1K5d77k=",
 			"path": "cloud.google.com/go/trace",
-			"revision": "8790afb57dfdb470da0b1f441c177e6e49ba66e7",
-			"revisionTime": "2017-03-17T01:54:53Z"
+			"revision": "8ed87a4b14859f0cb3a5b6bceb16a8396209bf06",
+			"revisionTime": "2017-03-13T03:57:24Z"
 		},
 		{
 			"checksumSHA1": "XfM/qyWID7VdNhlhw6/Ge/GVbG8=",
@@ -121,18 +121,6 @@
 			"path": "github.com/googleapis/gax-go",
 			"revision": "da06d194a00e19ce00d9011a13931c3f6f6887c7",
 			"revisionTime": "2016-11-07T00:24:06Z"
-		},
-		{
-			"checksumSHA1": "HKw3eJN92ez7eHh01MD7QFEZ1gg=",
-			"path": "github.com/harlow/grpc-google-cloud-trace",
-			"revision": "50cddeb62ce6e510266986eb28297a136782babd",
-			"revisionTime": "2017-03-08T17:03:29Z"
-		},
-		{
-			"checksumSHA1": "PUQk5sO+3kIdnlQzkmwxZrVKxSk=",
-			"path": "github.com/harlow/grpc-google-cloud-trace/intercept",
-			"revision": "50cddeb62ce6e510266986eb28297a136782babd",
-			"revisionTime": "2017-03-08T17:03:29Z"
 		},
 		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",

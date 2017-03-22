@@ -24,7 +24,6 @@ import (
 	"cloud.google.com/go/trace"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
-	"github.com/harlow/grpc-google-cloud-trace/intercept"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -82,7 +81,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	grpcServer := grpc.NewServer(intercept.EnableGRPCTracingServerOption(tc))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(trace.GRPCServerInterceptor(tc)))
 	pb.RegisterUserDirectoryServer(grpcServer, &userDirectory{ds})
 	log.WithField("addr", *addr).Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))

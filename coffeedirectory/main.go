@@ -25,7 +25,6 @@ import (
 	"cloud.google.com/go/trace"
 	pb "github.com/ahmetb/coffeelog/coffeelog"
 	"github.com/ahmetb/coffeelog/version"
-	"github.com/harlow/grpc-google-cloud-trace/intercept"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -74,7 +73,7 @@ func main() {
 
 	cc, err := grpc.Dial(*userDirectoryBackend,
 		grpc.WithInsecure(),
-		intercept.EnableGRPCTracingDialOption)
+		grpc.WithUnaryInterceptor(trace.GRPCClientInterceptor()))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to contact user directory"))
 	}
@@ -97,7 +96,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	grpcServer := grpc.NewServer(intercept.EnableGRPCTracingServerOption(tc))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(trace.GRPCServerInterceptor(tc)))
 	svc := &service{ds, pb.NewUserDirectoryClient(cc)}
 	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
 	pb.RegisterActivityDirectoryServer(grpcServer, svc)

@@ -165,7 +165,6 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
 	"google.golang.org/api/transport"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -239,31 +238,6 @@ func requestHook(ctx context.Context, req *http.Request) func(resp *http.Respons
 	}
 }
 
-// EnableGRPCTracingDialOption traces all outgoing requests from a gRPC client.
-// The calling context should already have a *trace.Span; a child span will be
-// created for the outgoing gRPC call. If the calling context doesn't have a span,
-// the call will not be traced.
-//
-// The functionality in gRPC that this relies on is currently experimental.
-var EnableGRPCTracingDialOption grpc.DialOption = grpc.WithUnaryInterceptor(grpc.UnaryClientInterceptor(grpcUnaryInterceptor))
-
-// EnableGRPCTracing automatically traces all gRPC calls from cloud.google.com/go clients.
-//
-// The functionality in gRPC that this relies on is currently experimental.
-var EnableGRPCTracing option.ClientOption = option.WithGRPCDialOption(EnableGRPCTracingDialOption)
-
-func grpcUnaryInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	// TODO: also intercept streams.
-	span := FromContext(ctx).NewChild(method)
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	if err != nil {
-		// TODO: standardize gRPC label names?
-		span.SetLabel("error", err.Error())
-	}
-	span.Finish()
-	return err
-}
-
 // nextSpanID returns a new span ID.  It will never return zero.
 func nextSpanID() uint64 {
 	var id uint64
@@ -315,7 +289,7 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 		traces := bundle.([]*api.Trace)
 		err := c.upload(traces)
 		if err != nil {
-			log.Printf("failed to upload %d traces to the Cloud Trace server.", len(traces))
+			log.Printf("failed to upload %d traces to the Cloud Trace server: %v", len(traces), err)
 		}
 	})
 	bundler.DelayThreshold = 2 * time.Second
