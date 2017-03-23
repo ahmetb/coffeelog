@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/trace"
 	"cloud.google.com/go/trace/traceutil"
+	"github.com/ahmetb/coffeelog/version"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,7 +29,7 @@ func (p *proxyResponseWriter) Write(b []byte) (int, error) {
 
 // traceHandler wraps the HTTP handler with tracing that automatically finishes
 // the span. It adds additional fields to the trace span about the response and
-// adds correlation header to th
+// adds correlation header to the headers.
 func (s *server) traceHandler(h func(http.ResponseWriter, *http.Request)) http.Handler {
 	return traceutil.HTTPHandler(s.tc, func(w http.ResponseWriter, r *http.Request) {
 		ww := &proxyResponseWriter{w: w}
@@ -44,6 +45,7 @@ func (s *server) traceHandler(h func(http.ResponseWriter, *http.Request)) http.H
 			span.Finish()
 		}()
 		ww.Header().Set("X-Cloud-Trace-Context", span.TraceID())
+		ww.Header().Set("App-Version", version.Version())
 		h(ww, r)
 	})
 }
