@@ -40,12 +40,13 @@ func (s *server) traceHandler(h func(http.ResponseWriter, *http.Request)) http.H
 				code = http.StatusOK
 			}
 			span.SetLabel("http/resp/status_code", fmt.Sprint(code))
-			span.SetLabel("http/resp/content_length", fmt.Sprint(ww.length))
+			span.SetLabel("http/response/content_length", fmt.Sprint(ww.length))
 			span.SetLabel("http/req/id", span.TraceID())
+			span.SetLabel("app/version", version.Version())
 			span.Finish()
 		}()
 		ww.Header().Set("X-Cloud-Trace-Context", span.TraceID())
-		ww.Header().Set("App-Version", version.Version())
+		ww.Header().Set("X-App-Version", version.Version())
 		h(ww, r)
 	})
 }
