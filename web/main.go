@@ -517,6 +517,7 @@ func (s *server) activity(w http.ResponseWriter, r *http.Request) {
 func (s *server) userProfile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	span := trace.FromContext(ctx)
+
 	userID := mux.Vars(r)["id"]
 	span.SetLabel("user/id", userID)
 

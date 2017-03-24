@@ -158,7 +158,6 @@ func (c *service) ListRoasters(ctx context.Context, _ *pb.RoastersRequest) (*pb.
 	defer span.Finish()
 
 	resp := new(pb.RoastersResponse)
-
 	var data []roaster
 	if _, err := c.ds.GetAll(ctx, datastore.NewQuery(kindRoaster), &data); err != nil {
 		log.WithField("error", err).Error("datastore query failed")
@@ -266,6 +265,8 @@ func uploadPicture(ctx context.Context, filename, contentType string, b []byte) 
 
 func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb.Activity, error) {
 	span := trace.FromContext(ctx).NewChild("coffeesvc/GetActivity")
+	defer span.Finish()
+
 	var v activity
 	if err := c.ds.Get(ctx, datastore.IDKey(kindActivity, req.GetID(), nil), &v); err == datastore.ErrNoSuchEntity {
 		return nil, errors.New("activity not found")
@@ -289,6 +290,8 @@ func (c *service) GetActivity(ctx context.Context, req *pb.ActivityRequest) (*pb
 
 func (c *service) GetUserActivities(ctx context.Context, req *pb.UserActivitiesRequest) (*pb.UserActivitiesResponse, error) {
 	span := trace.FromContext(ctx).NewChild("coffeesvc/GetActivities")
+	defer span.Finish()
+
 	span.SetLabel("user/id", req.GetUserID())
 	log.WithField("user.id", req.GetUserID()).Debug("querying datastore for activities")
 
