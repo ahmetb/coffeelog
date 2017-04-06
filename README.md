@@ -132,3 +132,7 @@ Or automate continuous deployment:
 
 Find out the External IP address of the exposed service by using `kubectl get
 service/web` and visit the application at `http://IP`.
+
+## Planned Features
+
+- [ ] Integrate Kubernetes RBAC to control access to secrets from pods
