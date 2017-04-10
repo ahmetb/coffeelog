@@ -20,8 +20,12 @@ dependencies:
 test:
   post:
     - echo "noop"
+    - chown -R /home/ubuntu/.kube
     - ls -al /home/ubuntu/.kube/
-    - sudo kubectl version
+    - id
+    - sudo chown -R $USER /home/ubuntu/.kube
+    - ls -al /home/ubuntu/.kube/
+    - kubectl version
     - gcloud version
 
 deployment:
