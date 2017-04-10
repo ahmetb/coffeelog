@@ -20,6 +20,8 @@ dependencies:
 test:
   post:
     - echo "noop"
+    - kubectl version
+    - gcloud version
 
 deployment:
   prod:
