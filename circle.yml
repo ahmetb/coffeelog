@@ -20,11 +20,11 @@ dependencies:
 test:
   post:
     - echo "noop"
-    - ls -al /home/ubuntu/.kube/
-    - id
     - sudo chown -R $USER /home/ubuntu/.kube
+    - sudo chown -R $USER /home/.config
     - ls -al /home/ubuntu/.kube/
     - gcloud config config-helper --format=json | head -n 10
+    - ls -al /home/ubuntu/.config/gcloud
     - kubectl version
     - gcloud version
 
