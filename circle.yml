@@ -20,7 +20,8 @@ dependencies:
 test:
   post:
     - echo "noop"
-    - kubectl version
+    - ls -al /home/ubuntu/.kube/
+    - sudo kubectl version
     - gcloud version
 
 deployment:
