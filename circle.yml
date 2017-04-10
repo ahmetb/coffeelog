@@ -20,13 +20,6 @@ dependencies:
 test:
   post:
     - echo "noop"
-    - sudo chown -R $USER /home/ubuntu/.kube
-    - sudo chown -R $USER /home/ubuntu/.config
-    - ls -al /home/ubuntu/.kube/
-    - gcloud config config-helper --format=json | head -n 10
-    - ls -al /home/ubuntu/.config/gcloud
-    - kubectl version
-    - gcloud version
 
 deployment:
   prod:
@@ -34,4 +27,5 @@ deployment:
     commands:
       - sed -i "s/:latest/:$CIRCLE_SHA1/g" misc/kube/deployment.yaml
       - sudo chown -R ubuntu:ubuntu /home/ubuntu/.kube
+      - sudo chown -R ubuntu:ubuntu /home/ubuntu/.config
       - kubectl apply -f misc/kube/
