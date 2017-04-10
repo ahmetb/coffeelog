@@ -136,3 +136,4 @@ service/web` and visit the application at `http://IP`.
 ## Planned Features
 
 - [ ] Integrate Kubernetes RBAC to control access to secrets from pods
+- [ ] use linkerd (or [Kubernetes TLS](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)) to encrypt traffic       between microservices
