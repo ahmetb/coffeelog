@@ -15,7 +15,12 @@ test new DevOps technologies and features of Google Cloud Platform. It uses:
 - Stackdriver Logging
 - Stackdriver Trace
 
-**Disclaimer:** This is not an official Google product.
+## Planned Features
+
+- [ ] Integrate Kubernetes RBAC to control access to secrets from pods
+- [ ] use linkerd (or [Kubernetes TLS](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)) to encrypt traffic       between microservices
+- [ ] Helm to package and deploy the application manifests
+  - [ ] App Registry to store Helm charts
 
 ## Required Configuration
 
@@ -133,7 +138,6 @@ Or automate continuous deployment:
 Find out the External IP address of the exposed service by using `kubectl get
 service/web` and visit the application at `http://IP`.
 
-## Planned Features
+-----
 
-- [ ] Integrate Kubernetes RBAC to control access to secrets from pods
-- [ ] use linkerd (or [Kubernetes TLS](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)) to encrypt traffic       between microservices
+**Disclaimer:** This is not an official Google product.
