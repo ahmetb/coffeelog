@@ -5,7 +5,10 @@ with their Google accounts, post pictures and other details of their coffee
 experiences.
 
 It is intended to be a demo application which is written to demonstrate and
-test new DevOps technologies and features of Google Cloud Platform. It uses:
+test new DevOps technologies and features of Google Cloud Platform. **You can
+deploy this application yourself and play with it.**
+
+It uses:
 
 - Go programming language
 - gRPC
@@ -15,35 +18,23 @@ test new DevOps technologies and features of Google Cloud Platform. It uses:
 - Stackdriver Logging
 - Stackdriver Trace
 
-## Planned Features
-
-- [ ] Integrate Kubernetes RBAC to control access to secrets from pods
-- [ ] use linkerd (or [Kubernetes TLS](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)) to encrypt traffic       between microservices
-- [ ] Helm to package and deploy the application manifests
-  - [ ] App Registry to store Helm charts
-
-## Required Configuration
-
-1. a Google Cloud Platform project ID
-1. Create a Service Account with following roles and download the JSON key:
-    - Datastore User
-    - Storage Admin
-1. Create an OAuth2 client and download the JSON key.
-    - Google Cloud Console &rarr; API Manager &rarr; Credentials &rarr; Create &rarr; OAuth client ID
-    - You can specify callback uri as `http://localhost/oauth2callback` and change later.
-
 ## Setup
 
-Create Datastore indexes required:
+The following steps will walk you through on how to prepare requirements, deploy
+and run this application:
 
-    gcloud datastore create-indexes misc/index.yaml
+1. [Requirements](docs/requirements.md)
+1. [Set up service credentials](docs/set-up-service-credentials.md)
+1. [Set up storage](docs/set-up-storage.md)
+1. [Set up a Kubernetes cluster](docs/set-up-storage.md)
+1. Set up continuous image build
+1. Set up continuous deployment
+1. Lock secrets down to services
 
-If you are going to deploy on Kubernetes, add keys as secrets:
+Also if you're interested in developing this application yourself:
 
-    kubectl create secret generic google-service-account --from-file=app_default_credentials.json=<path-to-file-on-disk>
-    kubectl create secret generic oauth2 --from-file=client-secret.json=<path-to-file-on-disk>
-
-and update the `misc/kube/configmap-google.yaml` to your Google Cloud project ID.
+1. [Running services outside containers](#)
+1. [Running locally on Minikube](#)
 
 ## Running locally without containers
 
@@ -138,6 +129,11 @@ Or automate continuous deployment:
 Find out the External IP address of the exposed service by using `kubectl get
 service/web` and visit the application at `http://IP`.
 
------
+## Planned Features
+
+- [ ] Integrate Kubernetes RBAC to control access to secrets from pods
+- [ ] use linkerd (or [Kubernetes TLS](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)) to encrypt traffic       between microservices
+- [ ] Helm to package and deploy the application manifests
+  - [ ] App Registry to store Helm charts
 
 **Disclaimer:** This is not an official Google product.

@@ -34,6 +34,7 @@ const (
 	kindRoaster  = "Roaster"  // datastore kind
 	kindActivity = "Activity" // datastore kind
 
+	// TODO(ahmetb) make configurable
 	bucketPics = "coffeepics" // storage bucket
 )
 
