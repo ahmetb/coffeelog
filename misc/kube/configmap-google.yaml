@@ -4,3 +4,4 @@ metadata:
   name: google
 data:
   project.id: ahmetb-starter
+  pics_bucket.name: coffeepics

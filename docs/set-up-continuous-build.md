@@ -43,6 +43,6 @@ command do deploy everything.
 
 Since we use [Deployment
 contoller](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
-on Kubernetes, this operation will be a rolling deployment and if anything fails
-(e.g. image build that happens asynchronously can fail), existing instances will
-keep running
+on Kubernetes, the deployment operation will be a rollingu update and if
+anything fails (e.g. image build that happens asynchronously can fail), existing
+instances will keep running.

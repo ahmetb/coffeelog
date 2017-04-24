@@ -45,3 +45,5 @@ which has account-specific values passed to the application.
 Edit the following configuration keys:
 
 - `project.id`: this is your Google Cloud project ID.
+- `pics_bucket.name`: name of the storage bucket you created earlier in “Set up
+  storage” step.

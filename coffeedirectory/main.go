@@ -35,6 +35,7 @@ var (
 	userDirectoryBackend = flag.String("user-directory-addr", "", "address of user directory backend")
 	projectID            = flag.String("google-project-id", "", "google cloud project id")
 	addr                 = flag.String("addr", ":8000", "[host]:port to listen")
+	gcsBucket            = flag.String("gcs-pics-bucket", "", "name of the public gcs bucket to store picture uploads")
 
 	log *logrus.Entry
 )
@@ -63,6 +64,9 @@ func main() {
 	}
 	if *projectID == "" {
 		log.Fatal("google cloud project id is not set")
+	}
+	if *gcsBucket == "" {
+		log.Fatal("gcs bucket name is not set")
 	}
 
 	ds, err := datastore.NewClient(ctx, *projectID)

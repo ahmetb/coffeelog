@@ -33,9 +33,6 @@ import (
 const (
 	kindRoaster  = "Roaster"  // datastore kind
 	kindActivity = "Activity" // datastore kind
-
-	// TODO(ahmetb) make configurable
-	bucketPics = "coffeepics" // storage bucket
 )
 
 type service struct {
@@ -199,7 +196,8 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 
 	var picURL string
 	if req.GetPicture() != nil {
-		url, err := uploadPicture(ctx, req.GetPicture().GetFilename(),
+		url, err := uploadPicture(ctx, *gcsBucket,
+			req.GetPicture().GetFilename(),
 			req.GetPicture().GetContentType(),
 			req.GetPicture().GetData())
 		if err != nil {
@@ -240,7 +238,7 @@ func (c *service) PostActivity(ctx context.Context, req *pb.PostActivityRequest)
 	return &pb.PostActivityResponse{ID: k.ID}, nil
 }
 
-func uploadPicture(ctx context.Context, filename, contentType string, b []byte) (string, error) {
+func uploadPicture(ctx context.Context, bucket, filename, contentType string, b []byte) (string, error) {
 	span := trace.FromContext(ctx).NewChild("gcs/upload")
 	defer span.Finish()
 
@@ -252,15 +250,16 @@ func uploadPicture(ctx context.Context, filename, contentType string, b []byte) 
 	defer cl.Close()
 
 	fn := fmt.Sprintf("%d/%02d/%s%s", t.Year(), t.Month(), uuid.NewV4(), path.Ext(filename))
-	w := cl.Bucket(bucketPics).Object(fn).NewWriter(ctx)
+	w := cl.Bucket(bucket).Object(fn).NewWriter(ctx)
 	w.ContentType = contentType
 	w.ACL = []storage.ACLRule{{Entity: storage.AllUsers, Role: storage.RoleReader}}
 	if _, err := w.Write(b); err != nil {
 		return "", errors.Wrap(err, "failed to write to storage object")
 	}
-	log.WithFields(logrus.Fields{"bucket": bucketPics,
+	log.WithFields(logrus.Fields{
+		"bucket": bucket,
 		"object": fn}).Debug("uploaded file")
-	url := fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucketPics, fn)
+	url := fmt.Sprintf("https://%s.storage.googleapis.com/%s", bucket, fn)
 	return url, errors.Wrap(w.Close(), "failed to close object writer")
 }
 

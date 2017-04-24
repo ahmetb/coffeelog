@@ -89,40 +89,4 @@ configuration on Google API Manager to `http://coffee.io:32000/oauth2callback`.
 
 ## Running on Google Container Engine
 
-#### 1. Create a cluster
-
-Make sure you have created a GKE cluster and obtained credentials:
-
-    gcloud container clusters create --zone us-central1-a coffee
-    gcloud container clusters get-credentials --zone us-central1-a coffee 
-
-#### 2. Automate docker image builds
-
-
-#### 3. Enable continous deployment
-
-Update `misc/kube/deployment.yml` with your `gcr.io/<project-id>`. Then deploy
-manually:
-
-    kubectl apply -f misc/kube/
-
-Or automate continuous deployment:
-
-- [CircleCI](http://circleci.com) to deploy the new versions of `misc/kube/*`
-  from the source code automatically. (See circle.yml for that.)
-- [Google Container Builder][cb] can also run `kubectl apply`. However it is not
-  very pretty today.(TODO: explain more)
-
-#### 4. Try it
-
-Find out the External IP address of the exposed service by using `kubectl get
-service/web` and visit the application at `http://IP`.
-
-## Planned Features
-
-- [ ] Integrate Kubernetes RBAC to control access to secrets from pods
-- [ ] use linkerd (or [Kubernetes TLS](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/)) to encrypt traffic       between microservices
-- [ ] Helm to package and deploy the application manifests
-  - [ ] App Registry to store Helm charts
-
 **Disclaimer:** This is not an official Google product.

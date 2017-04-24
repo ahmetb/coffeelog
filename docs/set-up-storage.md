@@ -16,4 +16,9 @@ the application:
 Coffeelog uses [Google Cloud Storage](https://cloud.google.com/storage) to store pictures
 uploaded by users and to serve them on the website.
 
-<!-- TODO document steps -->
+Create a new storage bucket with the NAME of your choosing and make it publicly readable:
+
+    gsutil mb gs://NAME
+    gsutil defacl ch -u AllUsers:R gs://NAME
+
+You use the name of this bucket in one of the next steps.

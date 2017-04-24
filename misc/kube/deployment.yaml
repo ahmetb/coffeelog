@@ -159,6 +159,7 @@ spec:
         - "-addr=:8002"
         - "-user-directory-addr=$(USER_SVC_ADDR)"
         - "-google-project-id=$(GOOGLE_PROJECT_ID)"
+        - "-gcs-pics-bucket=$(GCS_PICS_BUCKET)"
         ports:
         - containerPort: 8002
         volumeMounts:
@@ -178,6 +179,11 @@ spec:
             configMapKeyRef:
               name: google
               key: project.id
+        - name: GCS_PICS_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: pics_bucket.name
         resources:
           requests:
             cpu: 100m
