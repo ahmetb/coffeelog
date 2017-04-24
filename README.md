@@ -32,7 +32,14 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Try out the application!](docs/try-out.md)
 1. Lock secrets down to services
 
-Also if you're interested in developing this application yourself:
+Advanced:
+
+1. Set up distributed tracing
+1. Set up a domain name
+1. Set up Let’s Encrypt TLS
+1. Configure RBAC and service accounts for containers
+
+If you're interested in developing this application locally:
 
 1. [Running services outside containers](docs/run-directly.md)
 1. [Running locally on Minikube](docs/run-minikube.md)
