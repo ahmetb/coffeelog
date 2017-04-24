@@ -26,20 +26,25 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Requirements](docs/requirements.md)
 1. [Set up service credentials](docs/set-up-service-credentials.md)
 1. [Set up storage](docs/set-up-storage.md)
-1. [Set up a Kubernetes cluster](docs/set-up-storage.md)
-1. [Set up continuous image build](docs/set-up-image-build.md)
-1. [Set up continuous deployment](docs/set-up-continuous-build.md)
+1. [Set up a Kubernetes cluster on Google Container Engine](docs/set-up-storage.md)
+1. [Set up continuous image build on Google Container Builder](docs/set-up-image-build.md)
+1. [Set up continuous deployment on CircleCI](docs/set-up-continuous-build.md)
 1. [Try out the application!](docs/try-out.md)
-1. Lock secrets down to services
 
-Advanced:
+**Monitoring:**
 
-1. Set up distributed tracing
-1. Set up a domain name
-1. Set up Let’s Encrypt TLS
-1. Configure RBAC and service accounts for containers
+1. :soon: Set up distributed tracing with Stackdriver Trace
+1. :soon: Browse application logs with Stackdriver Logging
+1. :soon: Set up alerting with Stackdriver Monitoring
 
-If you're interested in developing this application locally:
+**Advanced topics:**
+
+1. :soon: Set up a domain name
+1. :soon: Set up TLS with Let’s Encrypt and kube-lego
+1. :soon: Limit access to secrets with Kubernetes Service accounts
+1. :soon: Set up TLS communication between microservices with linkerd
+
+**Local development** (if you are interested in developing this app further)
 
 1. [Running services outside containers](docs/run-directly.md)
 1. [Running locally on Minikube](docs/run-minikube.md)
