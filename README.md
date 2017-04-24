@@ -27,8 +27,9 @@ and run this application:
 1. [Set up service credentials](docs/set-up-service-credentials.md)
 1. [Set up storage](docs/set-up-storage.md)
 1. [Set up a Kubernetes cluster](docs/set-up-storage.md)
-1. Set up continuous image build
-1. Set up continuous deployment
+1. [Set up continuous image build](docs/set-up-image-build.md)
+1. [Set up continuous deployment](docs/set-up-continuous-build.md)
+1. [Try out the application!](docs/try-out.md)
 1. Lock secrets down to services
 
 Also if you're interested in developing this application yourself:
@@ -97,18 +98,6 @@ Make sure you have created a GKE cluster and obtained credentials:
 
 #### 2. Automate docker image builds
 
-You can use `make` to build the images and push to your gcr.io manually,
-however, setting up automated continuous builds using [Google Cloud Container
-Builder][cb] is a nicer solution:
-
-[cb]: https://cloud.google.com/container-builder/
-
-1. Go to Cloud Platform Console &rarr; Container Registry &rarr; Build Triggers
-   &rarr; Add Trigger
-1. Pick the GitHub repository (you can just fork this repo)
-1. Select the "cloudbuild.yml" option and specify the file path as that.
-1. Create the trigger (and trigger the first build manually)
-1. See if the image build succeeds.
 
 #### 3. Enable continous deployment
 
