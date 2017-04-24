@@ -21,7 +21,10 @@ It uses:
 ## Setup
 
 The following steps will walk you through on how to prepare requirements, deploy
-and run this application:
+and run this application.
+
+> **Note:** If you see any issues with the steps below, please [open an
+issue](https://github.com/ahmetb/coffeelog/issues/new).
 
 1. [Requirements](docs/requirements.md)
 1. [Set up service credentials](docs/set-up-service-credentials.md)
@@ -34,59 +37,9 @@ and run this application:
 
 Also if you're interested in developing this application yourself:
 
-1. [Running services outside containers](#)
-1. [Running locally on Minikube](#)
+1. [Running services outside containers](docs/run-directly.md)
+1. [Running locally on Minikube](docs/run-minikube.md)
 
-## Running locally without containers
-
-For quick dev-test cycle, you might want to just run it directly on your dev
-machine.
-
-```sh
-# make sure GOPATH is set and this repo is cloned to
-# src/github.com/ahmetb/coffeelog. cd in to this directory.
-
-export GOOGLE_APPLICATION_CREDENTIALS=<path-to-service-account-file>
-
-# Start user service
-go run ./userdirectory/*.go --addr=:8001 --google-project-id=<PROJECT> 
-
-# Start coffee/activity service
-go run ./coffeedirectory/*.go --addr=:8002 \
-     --user-directory-addr=:8001 \
-     --google-project-id=<PROJECT>
-
-# Start web frontend
-cd web # we need ./static directory to be present
-go run *.go --addr=:8000 --user-directory-addr=:8001 \
-    --coffee-directory-addr=:8002 \
-    --google-oauth2-config=<path-to-file> \
-    --google-project-id=<PROJECT>
-```
-
-## Running locally on Minikube
-
-    minikube start
-
-Build the docker image on minikube node:
-
-    eval $(minikube docker-env)
-    make
-
-Deploy:
-
-    kubectl apply -f misc/kube/
-
-(Do not forget to change the gcr.io image name in deployment.yml above.)
-
-Find out minikube IP from `minikube ip` and application port from `kubectl get
-svc`. web-local service is configured to run on :32000. Head to http://ip:32000
-to visit the application.
-
-If you want to login to the app, create fake domain name in /etc/hosts, like
-coffee.io and map the `minikube ip` to this hostname and update your OAuth2
-configuration on Google API Manager to `http://coffee.io:32000/oauth2callback`.
-
-## Running on Google Container Engine
+-----
 
 **Disclaimer:** This is not an official Google product.

@@ -47,3 +47,35 @@ Edit the following configuration keys:
 - `project.id`: this is your Google Cloud project ID.
 - `pics_bucket.name`: name of the storage bucket you created earlier in “Set up
   storage” step.
+
+Then, commit and push changes (to your fork).
+
+## Manual deployment
+
+Open `misc/kube/deployment.yaml` and change the image names `gcr.io/PROJECT_ID`
+to your actual project ID. Commit and push changes (to your fork). Then, deploy
+everything using the following command:
+
+    kubectl apply -f ./misc/kube
+
+Ideally, you should set up automated [continuous image
+builds](docs/set-up-image-build.md) and [continuous
+deployments](docs/set-up-continuous-build.md).
+
+## Try out manual deployment
+
+Find out the load balancer public IP address of the web frontend:
+
+    $ kubectl get service web
+
+    NAME      CLUSTER-IP      EXTERNAL-IP       PORT(S)        AGE
+    web       10.27.254.143   104.154.242.220   80:32428/TCP   55d
+
+It can take a while for external IP to appear. Once it does, you can create a
+hostname by appending `xip.io` (e.g. http://104.154.242.220.xip.io) and visit
+the website to see if it works.
+
+Using this hostname, you can go back to [API
+Manager](https://console.cloud.google.com/apis/dashboard) and edit the callback
+URL from `localhost` to the `IP.AD.DR.ESS.xip.io` format and log in to the
+application!
