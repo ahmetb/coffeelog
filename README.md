@@ -1,22 +1,19 @@
 # coffeelog
 
-CoffeeLog is a multi tier web application where people can create an account
-with their Google accounts, post pictures and other details of their coffee
-experiences.
+Coffeelog is a multi-tier web application where coffee enthusiasts can log in
+with their Google accounts and share their coffee experiences with other people.
 
-It is intended to be a demo application which is written to demonstrate and
-test new DevOps technologies and features of Google Cloud Platform. **You can
-deploy this application yourself and play with it.**
+This is intended to be a sample cloud-native application to showcase the best
+practices in application deployment, products of [Google Cloud](https://cloud.google.com)
+and test new features.
 
-It uses:
-
-- Go programming language
-- gRPC
-- Google Cloud Datastore
-- Google Cloud Storage
-- Kubernetes on Google Container Engine
-- Stackdriver Logging
-- Stackdriver Trace
+Coffeelog is written in [Go](https://golang.org), uses [gRPC](https://grpc.io)
+for communication between microservices. It runs on [Google
+Cloud](https://cloud.google.com) and uses Cloud Datastore, Cloud Storage,
+[Google Container Engine](https://cloud.google.com/container-engine/), [Cloud
+Container Builder](https://cloud.google.com/container-builder/), [Stackdriver
+Logging](https://cloud.google.com/logging/) and [Stackdriver
+Trace](https://cloud.google.com/trace/).
 
 ## Setup
 
