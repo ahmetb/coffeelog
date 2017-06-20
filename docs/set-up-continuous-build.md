@@ -49,7 +49,7 @@ every time you push a commit to the `master` branch:
 1. Specify the "Branch name" as `master`.
 1. Create the trigger.
 1. Trigger the first build manually.
-1. See the logs if the image build succeeds.
+1. See the logs if the deployment succeeds.
 
 Note that this will run in parallel with the image build when you push a commit.
 Therefore, when the manifests with the newer versions are applied to the
