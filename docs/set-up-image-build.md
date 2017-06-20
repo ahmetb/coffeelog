@@ -33,7 +33,7 @@ Builder](https://cloud.google.com/container-builder/)
 1. Fork this repository on GitHub
 1. Go to Cloud Platform Console &rarr; Container Registry &rarr; [Build Triggers](https://console.cloud.google.com/gcr/triggers)
    &rarr; Add Trigger
-1. Pick the coffeelog repository (that is your fork of my repo)
+1. Pick the coffeelog repository (that is, your fork of my repo)
 1. Select the "cloudbuild.yml" option and specify the file path as that.
 1. Create the trigger.
 1. Trigger the first build manually.

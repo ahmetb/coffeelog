@@ -27,8 +27,8 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Set up service credentials](docs/set-up-service-credentials.md)
 1. [Set up storage](docs/set-up-storage.md)
 1. [Set up a Kubernetes cluster on Google Container Engine](docs/set-up-storage.md)
-1. [Set up continuous image build on Google Container Builder](docs/set-up-image-build.md)
-1. [Set up continuous deployment on CircleCI](docs/set-up-continuous-build.md)
+1. [Set up continuous image build on Container Builder](docs/set-up-image-build.md)
+1. [Set up continuous deployment on Container Builder](docs/set-up-continuous-build.md)
 1. [Try out the application!](docs/try-out.md)
 
 **Monitoring:**

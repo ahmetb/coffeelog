@@ -4,45 +4,56 @@ Deploying this application is as simple as deploying all the manifests under
 [`misc/kube`](/misc/kube) directory using `kubectl` (requires changing the
 hard-coded image names).
 
-However ideally you want a new build to go live automatically when you push
-a new commit to your GitHub repository. For that, we can use a third-party
-Continuous Integration (CI) solution such as [CircleCI](http://circleci.com).
+## Setting up on Container Builder
 
-## Setting up CircleCI
+You can use [Google Cloud Container
+Builder](https://cloud.google.com/container-builder/) to automate deployments
+onto Google Container Engine.
 
-[Create a new Service
-Account](https://console.cloud.google.com/iam-admin/serviceaccounts/) on Cloud
-Console. Give it a name (e.g. `cirleci-deployment`) and give it the role
-“Container Engine Developer”. Click "furnish a new private key" and choose JSON
-type. Download this file.
+### Give Container Builder Access to GKE
 
-1. Sign up for an account on [CircleCI](http://circleci.com) with your GitHub
-account.
+By default, Container Builder’s service account does not have permissions to
+access Container Engine, so you have to make an one-time IAM [role
+assignment](https://cloud.google.com/container-builder/docs/how-to/service-account-permissions)
+manually.
 
-1. Enable the builds on the `coffeelog` repository. This will use the
-[`circle.yml`](/circle.yml).
+This account is named `[PROJECT_ID]@cloudbuild.gserviceaccount.com` where the
+`PROJECT_ID` is your **numeric** project ID. 
 
-1. Go to settings of the repository on Circle CI and click "Environment Variables"
-   &rarr; "Add Variable".
+You can do this role assignment by going to the Cloud Platform Console &rarr;
+IAM/Admin &rarr; IAM &rarr; Choose the service account with `cloudbuild` and
+update its roles on the dropdown to add "Container Engine Developer" role.
 
-1. Specify key as `GCLOUD_SERVICE_KEY` and paste the base64 encoding of the
-   JSON key file as the value. You can use this to encode:
+**Or you can use `gcloud`**: First, find out your numeric project ID and
+construct the cloudbuild account ID:
 
-       cat file.json | base64 -w0
+    PROJECT_NUM="$(gcloud projects list --filter='name = ahmetb-starter' --format='get(projectNumber)')"
 
-1. Go to the Builds tab, and start a new build by clicking "Rebuild" on one of
-   the previous builds.
+Then assign this account the "Container Engine Developer" role:
 
-1. Watch the logs, see if the build succeeds.
+    gcloud projects add-iam-policy-binding $PROJECT_NUM \
+        --member="serviceAccount:$PROJECT_NUM@cloudbuild.gserviceaccount.com" \
+        --role=roles/container.developer
 
+### Create a build trigger
 
-`circle.yml` file basically uses the Service Account key to authenticate
-to your Container Engine cluster, then modifies the `:latest` tag in the
-`misc/kube/*.yaml` files with the Git commit ID and uses `kubectl apply -f`
-command do deploy everything.
+This will run the continuous deployment steps in `clouddeploy.yaml`
+every time you push a commit to the `master` branch:
 
-Since we use [Deployment
-contoller](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
-on Kubernetes, the deployment operation will be a rollingu update and if
-anything fails (e.g. image build that happens asynchronously can fail), existing
-instances will keep running.
+1. Fork this repository on GitHub
+1. Go to Cloud Platform Console &rarr; Container Registry &rarr; [Build Triggers](https://console.cloud.google.com/gcr/triggers)
+   &rarr; Add Trigger
+1. Pick the coffeelog repository (that is, your fork of my repo) and Continue
+1. Give it the name "Continuous depoyment".
+1. Select the cloudbuild.yaml option and specify the file path as `clouddeploy.yaml`.
+1. Specify the "Branch name" as `master`.
+1. Create the trigger.
+1. Trigger the first build manually.
+1. See the logs if the image build succeeds.
+
+Note that this will run in parallel with the image build when you push a commit.
+Therefore, when the manifests with the newer versions are applied to the
+cluster, Deployment rollout will temporarily fail as it cannot find the image as
+it is not pushed yet. It will retry and succeed, in the meanwhile some pods in
+the Deployment will be unavailable but the services should continue to serve as
+they have multiple replicas.

@@ -1,0 +1,14 @@
+steps:
+- name: 'gcr.io/cloud-builders/kubectl'
+  entrypoint: 'env'
+- name: 'gcr.io/cloud-builders/kubectl'
+  entrypoint: 'echo'
+  args: ['${REVISION_ID}']
+- name: 'gcr.io/cloud-builders/kubectl'
+  entrypoint: 'sed'
+  args: ['find', './misc/kube', '-type', 'f', '-exec', 'sed', '-i', '-e', 's/:latest/:${REVISION_ID}/g', '{}', '\']
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: ['apply', '-f', './misc/kube']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=coffee'
