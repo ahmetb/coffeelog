@@ -81,7 +81,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(trace.GRPCServerInterceptor(tc)))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(tc.GRPCServerInterceptor()))
 	pb.RegisterUserDirectoryServer(grpcServer, &userDirectory{ds})
 	log.WithField("addr", *addr).Info("starting to listen on grpc")
 	log.Fatal(grpcServer.Serve(lis))

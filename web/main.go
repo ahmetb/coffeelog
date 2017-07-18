@@ -106,9 +106,13 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to parse config file"))
 	}
 
+	tc, err := trace.NewClient(context.Background(), *projectID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize trace client"))
+	}
 	userSvcConn, err := grpc.Dial(*userDirectoryBackend,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(trace.GRPCClientInterceptor()))
+		grpc.WithUnaryInterceptor(tc.GRPCClientInterceptor()))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect user service"))
 	}
@@ -118,7 +122,7 @@ func main() {
 	}()
 	coffeeSvcConn, err := grpc.Dial(*coffeeDirectoryBackend,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(trace.GRPCClientInterceptor()))
+		grpc.WithUnaryInterceptor(tc.GRPCClientInterceptor()))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot connect coffee service"))
 	}
@@ -126,11 +130,6 @@ func main() {
 		log.Info("closing connection to user directory")
 		coffeeSvcConn.Close()
 	}()
-
-	tc, err := trace.NewClient(context.Background(), *projectID)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to initialize trace client"))
-	}
 	sp, err := trace.NewLimitedSampler(1.0, 5)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to create sampling policy"))

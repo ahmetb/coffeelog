@@ -75,9 +75,13 @@ func main() {
 	}
 	defer ds.Close()
 
+	tc, err := trace.NewClient(ctx, *projectID)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize tracing client"))
+	}
 	cc, err := grpc.Dial(*userDirectoryBackend,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(trace.GRPCClientInterceptor()))
+		grpc.WithUnaryInterceptor(tc.GRPCClientInterceptor()))
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to contact user directory"))
 	}
@@ -86,10 +90,6 @@ func main() {
 		cc.Close()
 	}()
 
-	tc, err := trace.NewClient(ctx, *projectID)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to initialize tracing client"))
-	}
 	ts, err := trace.NewLimitedSampler(1.0, 10)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to initialize sampling policy"))
@@ -100,7 +100,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(trace.GRPCServerInterceptor(tc)))
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(tc.GRPCServerInterceptor()))
 	svc := &service{ds, pb.NewUserDirectoryClient(cc)}
 	pb.RegisterRoasterDirectoryServer(grpcServer, svc)
 	pb.RegisterActivityDirectoryServer(grpcServer, svc)
