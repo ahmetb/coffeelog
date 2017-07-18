@@ -8,7 +8,8 @@ spec:
   replicas: 3
   strategy:
     rollingUpdate:
-      maxUnavailable: 40%
+      maxUnavailable: 50%
+      maxSurge: 100%
   template:
     metadata:
       labels:
@@ -84,7 +85,8 @@ spec:
   replicas: 3
   strategy:
     rollingUpdate:
-      maxUnavailable: 40%
+      maxUnavailable: 50%
+      maxSurge: 100%
   template:
     metadata:
       labels:
@@ -138,7 +140,8 @@ spec:
   replicas: 3
   strategy:
     rollingUpdate:
-      maxUnavailable: 40%
+      maxUnavailable: 50%
+      maxSurge: 100%
   template:
     metadata:
       labels:
