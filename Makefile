@@ -1,10 +1,15 @@
 BIN_DIR=./gopath/bin
 BINARIES=web coffeedirectory userdirectory
 PROJECT?=ahmetb-starter
+IMAGE_TAG?=latest
 
-docker-images: binaries
-	BINS=(${BINARIES}); for b in $${BINS[*]}; do \
-	  docker build -f=Dockerfile.$$b -t=gcr.io/${PROJECT}/$$b:latest . ;\
+docker-images:
+	set -x; BINS=(${BINARIES}); for b in $${BINS[*]}; do \
+	  docker build \
+			-f=Dockerfile.$$b \
+			-t=gcr.io/${PROJECT}/$$b:$${IMAGE_TAG} \
+			--build-arg REVISION_ID="$$(git describe --always --dirty)" \
+			.; \
 	done
 binaries:
 	if [ -z "$$GOPATH" ]; then echo "GOPATH is not set"; exit 1; fi

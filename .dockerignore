@@ -1,2 +1,5 @@
 Dockerfile*
 misc
+Makefile
+cloudbuild.yaml
+clouddeploy.yaml

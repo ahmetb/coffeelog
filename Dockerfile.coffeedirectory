@@ -1,7 +1,15 @@
+FROM golang:1.9-alpine as build
+COPY . $GOPATH/src/github.com/ahmetb/coffeelog
+ARG REVISION_ID
+RUN go install -v \
+      -tags netgo \
+      -ldflags="-w -X github.com/ahmetb/coffeelog/version.version=$REVISION_ID" \
+      github.com/ahmetb/coffeelog/coffeedirectory
+
 FROM alpine
 RUN apk add --update ca-certificates && \
       rm -rf /var/cache/apk/* /tmp/*
 
-COPY ./gopath/bin/coffeedirectory ./coffeedirectory
+COPY  --from=0 /go/bin/coffeedirectory ./coffeedirectory
 ENTRYPOINT ["./coffeedirectory"]
 EXPOSE 8002
