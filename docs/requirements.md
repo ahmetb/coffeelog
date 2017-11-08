@@ -21,7 +21,7 @@ as it uses services such as:
 1. Download the [`kubectl` command-line tool](https://kubernetes.io/docs/user-guide/kubectl-overview/)
 
        # to install on macOS
-       brew install kubectl 
+       brew install kubectl
 
        # or use gcloud (works on other platforms as well)
        gcloud components install kubectl

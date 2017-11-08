@@ -15,6 +15,7 @@ To create a Container Engine cluster named `coffee` with
     gcloud container clusters create \
        --zone us-central1-a \
        --num-nodes 3 \
+       --enable-network-policy \
        --enable-autoscaling --min-nodes 1 --max-nodes 10 \
        coffee
 

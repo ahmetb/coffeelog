@@ -26,7 +26,7 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Requirements](docs/requirements.md)
 1. [Set up service credentials](docs/set-up-service-credentials.md)
 1. [Set up storage](docs/set-up-storage.md)
-1. [Set up a Kubernetes cluster on Google Container Engine](docs/set-up-storage.md)
+1. [Set up a Kubernetes cluster on Google Container Engine](docs/set-up-a-kubernetes-cluster.md)
 1. [Set up continuous image build on Container Builder](docs/set-up-image-build.md)
 1. [Set up continuous deployment on Container Builder](docs/set-up-continuous-build.md)
 1. [Try out the application!](docs/try-out.md)
@@ -40,9 +40,10 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 **Advanced topics:**
 
 1. :soon: Set up a domain name
-1. :soon: Set up TLS with Let’s Encrypt and kube-lego
-1. :soon: Limit access to secrets with Kubernetes Service accounts
+1. :soon: Set up TLS with Let’s Encrypt
+1. :soon: Limit access to secrets with Kubernetes RBAC and Service accounts
 1. :soon: Set up TLS communication between microservices with linkerd
+1. :soon: [Set up Network Policy to restrict communication between services](docs/network-policy.md)
 
 **Local development** (if you are interested in developing this app further)
 
