@@ -31,19 +31,19 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Set up continuous deployment on Container Builder](docs/set-up-continuous-build.md)
 1. [Try out the application!](docs/try-out.md)
 
+**Advanced topics:**
+
+1. [Set up Network Policy to restrict communication between services](docs/network-policy.md)
+1. :soon: Set up a domain name
+1. :soon: Set up TLS with Let’s Encrypt
+1. :soon: Limit access to secrets with Kubernetes RBAC and Service accounts
+1. :soon: Set up TLS communication between microservices with linkerd
+
 **Monitoring:**
 
 1. :soon: Set up distributed tracing with Stackdriver Trace
 1. :soon: Browse application logs with Stackdriver Logging
 1. :soon: Set up alerting with Stackdriver Monitoring
-
-**Advanced topics:**
-
-1. :soon: Set up a domain name
-1. :soon: Set up TLS with Let’s Encrypt
-1. :soon: Limit access to secrets with Kubernetes RBAC and Service accounts
-1. :soon: Set up TLS communication between microservices with linkerd
-1. :soon: [Set up Network Policy to restrict communication between services](docs/network-policy.md)
 
 **Local development** (if you are interested in developing this app further)
 
