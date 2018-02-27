@@ -29,7 +29,6 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Set up a Kubernetes cluster on Google Kubernetes Engine](docs/set-up-a-kubernetes-cluster.md)
 1. [Set up continuous image build on Container Builder](docs/set-up-image-build.md)
 1. [Set up continuous deployment on Container Builder](docs/set-up-continuous-build.md)
-1. [Try out the application!](docs/try-out.md)
 
 **Advanced topics:**
 

@@ -8,12 +8,12 @@ hard-coded image names).
 
 You can use [Google Cloud Container
 Builder](https://cloud.google.com/container-builder/) to automate deployments
-onto Google Container Engine.
+onto Google Kubernetes Engine.
 
 ### Give Container Builder Access to GKE
 
 By default, Container Builder’s service account does not have permissions to
-access Container Engine, so you have to make an one-time IAM [role
+access Kubernetes Engine, so you have to make an one-time IAM [role
 assignment](https://cloud.google.com/container-builder/docs/how-to/service-account-permissions)
 manually.
 
@@ -22,14 +22,14 @@ This account is named `[PROJECT_ID]@cloudbuild.gserviceaccount.com` where the
 
 You can do this role assignment by going to the Cloud Platform Console &rarr;
 IAM/Admin &rarr; IAM &rarr; Choose the service account with `cloudbuild` and
-update its roles on the dropdown to add "Container Engine Developer" role.
+update its roles on the dropdown to add "Kubernetes Engine Developer" role.
 
 **Or you can use `gcloud`**: First, find out your numeric project ID and
 construct the cloudbuild account ID:
 
     PROJECT_NUM="$(gcloud projects list --filter='name = ahmetb-starter' --format='get(projectNumber)')"
 
-Then assign this account the "Container Engine Developer" role:
+Then assign this account the "Kubernetes Engine Developer" role:
 
     gcloud projects add-iam-policy-binding $PROJECT_NUM \
         --member="serviceAccount:$PROJECT_NUM@cloudbuild.gserviceaccount.com" \

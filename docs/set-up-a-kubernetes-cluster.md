@@ -7,9 +7,9 @@ To orchestrate deployment, lifecycle and replication of these services
 on a pool of [compute instances](https://cloud.google.com/compute), we
 use [Kubernetes](https://kubernetes.io).
 
-## Create a Container Engine cluster
+## Create a Kubernetes Engine cluster
 
-To create a Container Engine cluster named `coffee` with
+To create a Kubernetes Engine cluster named `coffee` with
 3 nodes (and node auto-scaling enabled), run:
 
     gcloud container clusters create \

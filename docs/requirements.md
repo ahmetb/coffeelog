@@ -5,7 +5,7 @@ as it uses services such as:
 
 - [Google Cloud Datastore](http://cloud.google.com/datastore)
 - [Google Cloud Storage](http://cloud.google.com/storage)
-- [Google Container Engine](https://cloud.google.com/container-engine/)
+- [Google Kubernetes Engine](https://cloud.google.com/container-engine/)
 - [Google Cloud Container Builder](https://cloud.google.com/container-builder/)
 
 1. Create a new project on [Google Cloud Platform Console](https://console.cloud.google.com).
