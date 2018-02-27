@@ -33,7 +33,7 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 **Advanced topics:**
 
 1. [Set up Network Policy to restrict communication between services](docs/network-policy.md)
-1. :soon: Set up a domain name
+1. [Set up a domain name](docs/domain-name.md)
 1. :soon: Set up TLS with Let’s Encrypt
 1. :soon: Limit access to secrets with Kubernetes RBAC and Service accounts
 1. :soon: Set up TLS communication between microservices with linkerd

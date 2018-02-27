@@ -81,7 +81,7 @@ Find out the HTTP load balancer public IP address of the web frontend:
     web-http   *         35.227.223.249   80        55s
 
 It can take a while for external IP to appear. Once it does, you can create a
-hostname by appending `xip.io` (e.g. http://104.154.242.220.xip.io) and visit
+hostname by appending `xip.io` (e.g. http://35.227.223.249.xip.io) and visit
 the website to see if it works (it may take a few minutes for Load Balancer
 to start fully working, you may see errors in the meanwhile).
 
