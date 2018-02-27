@@ -10,7 +10,7 @@ and test new features.
 Coffeelog is written in [Go](https://golang.org), uses [gRPC](https://grpc.io)
 for communication between microservices. It runs on [Google
 Cloud](https://cloud.google.com) and uses Cloud Datastore, Cloud Storage,
-[Google Container Engine](https://cloud.google.com/container-engine/), [Cloud
+[Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/), [Cloud
 Container Builder](https://cloud.google.com/container-builder/), [Stackdriver
 Logging](https://cloud.google.com/logging/) and [Stackdriver
 Trace](https://cloud.google.com/trace/).
@@ -26,7 +26,7 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 1. [Requirements](docs/requirements.md)
 1. [Set up service credentials](docs/set-up-service-credentials.md)
 1. [Set up storage](docs/set-up-storage.md)
-1. [Set up a Kubernetes cluster on Google Container Engine](docs/set-up-a-kubernetes-cluster.md)
+1. [Set up a Kubernetes cluster on Google Kubernetes Engine](docs/set-up-a-kubernetes-cluster.md)
 1. [Set up continuous image build on Container Builder](docs/set-up-image-build.md)
 1. [Set up continuous deployment on Container Builder](docs/set-up-continuous-build.md)
 1. [Try out the application!](docs/try-out.md)

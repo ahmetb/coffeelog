@@ -51,6 +51,14 @@ Edit the following configuration keys:
 
 Then, commit and push changes (to your fork).
 
+## Reserve a static IP address for your application
+
+```sh
+gcloud compute addresses create --global "coffee"
+```
+
+This will be used by the Ingress resource when you deploy.
+
 ## Manual deployment
 
 Open `misc/kube/deployment.yaml` and change the image names `gcr.io/PROJECT_ID`
@@ -65,16 +73,17 @@ deployments](docs/set-up-continuous-build.md).
 
 ## Try out manual deployment
 
-Find out the load balancer public IP address of the web frontend:
+Find out the HTTP load balancer public IP address of the web frontend:
 
-    $ kubectl get service web
+    $ kubectl get ingress web-http
 
-    NAME      CLUSTER-IP      EXTERNAL-IP       PORT(S)        AGE
-    web       10.27.254.143   104.154.242.220   80:32428/TCP   55d
+    NAME       HOSTS     ADDRESS          PORTS     AGE
+    web-http   *         35.227.223.249   80        55s
 
 It can take a while for external IP to appear. Once it does, you can create a
 hostname by appending `xip.io` (e.g. http://104.154.242.220.xip.io) and visit
-the website to see if it works.
+the website to see if it works (it may take a few minutes for Load Balancer
+to start fully working, you may see errors in the meanwhile).
 
 Using this hostname, you can go back to [API
 Manager](https://console.cloud.google.com/apis/dashboard) and edit the callback
