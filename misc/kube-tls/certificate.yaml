@@ -1,0 +1,19 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: coffeelog-tls
+  namespace: default
+spec:
+  secretName: coffeelog-web-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: coffee.ahmet.im
+  dnsNames:
+  - coffee.ahmet.im
+  acme:
+    config:
+    - http01:
+        ingress: web-http
+      domains:
+      - coffee.ahmet.im

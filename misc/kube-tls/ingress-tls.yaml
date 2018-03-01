@@ -1,0 +1,17 @@
+# cloned from ../kube/ingress.yaml, just added the tls section
+# ideally use something like kinflate here to process the drop-in
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: web-http
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "coffee"
+spec:
+  backend:
+    serviceName: web-local
+    servicePort: 8000
+  tls:
+  - secretName: coffeelog-web-tls
+    hosts:
+    - coffee.ahmet.im
