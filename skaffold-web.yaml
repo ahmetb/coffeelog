@@ -1,0 +1,15 @@
+apiVersion: skaffold/v1
+kind: Config
+build:
+  tagPolicy: sha256
+  artifacts:
+  - imageName: gcr.io/ahmetb-starter/web
+    workspace: .
+    dockerfilePath: Dockerfile.web
+  local: {}
+deploy:
+  kubectl:
+    manifests:
+    - paths:
+      - ./misc/kube/common
+      - ./misc/kube/web

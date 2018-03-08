@@ -1,0 +1,54 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: userdirectory-deployment
+spec:
+  revisionHistoryLimit: 5
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 100%
+  template:
+    metadata:
+      labels:
+        app: userdirectory
+    spec:
+      volumes:
+      - name: google-cloud-secrets
+        secret:
+          secretName: google-service-account
+          items:
+          - key: app_default_credentials.json
+            path: app-credentials.json
+      containers:
+      - name: userdirectory
+        image: gcr.io/ahmetb-starter/userdirectory:latest
+        args:
+        - "-addr=:8001"
+        - "-google-project-id=$(GOOGLE_PROJECT_ID)"
+        imagePullPolicy: IfNotPresent # minikube-only
+        ports:
+        - containerPort: 8001
+        volumeMounts:
+        - name: google-cloud-secrets
+          mountPath: /etc/secrets/google
+          readOnly: true
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/secrets/google/app-credentials.json
+        - name: GOOGLE_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: project.id
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        livenessProbe:
+          initialDelaySeconds: 10
+          tcpSocket:
+            port: 8001

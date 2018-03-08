@@ -1,0 +1,66 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: coffeedirectory-deployment
+spec:
+  revisionHistoryLimit: 5
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 100%
+  template:
+    metadata:
+      labels:
+        app: coffeedirectory
+    spec:
+      volumes:
+      - name: oauth-secrets
+        secret:
+          secretName: google-service-account
+          items:
+          - key: app_default_credentials.json
+            path: app-credentials.json
+      containers:
+      - name: coffeedirectory
+        image: gcr.io/ahmetb-starter/coffeedirectory:latest
+        imagePullPolicy: IfNotPresent # minikube-only
+        args:
+        - "-addr=:8002"
+        - "-user-directory-addr=$(USER_SVC_ADDR)"
+        - "-google-project-id=$(GOOGLE_PROJECT_ID)"
+        - "-gcs-pics-bucket=$(GCS_PICS_BUCKET)"
+        ports:
+        - containerPort: 8002
+        volumeMounts:
+        - name: oauth-secrets
+          mountPath: /etc/secrets/google
+          readOnly: true
+        env:
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/secrets/google/app-credentials.json
+        - name: USER_SVC_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: hosts
+              key: userdirectory
+        - name: GOOGLE_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: project.id
+        - name: GCS_PICS_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: pics_bucket.name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        livenessProbe:
+          initialDelaySeconds: 10
+          tcpSocket:
+            port: 8002

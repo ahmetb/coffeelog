@@ -14,7 +14,7 @@ project ID instead of the `gcr.io/ahmet-...` format.
 
 Deploy everything:
 
-    kubectl apply -f ./misc/kube/   
+    kubectl apply -f ./misc/kube/
 
 Find out minikube IP from `minikube ip` and application port from `kubectl get
 svc`. web-local service is configured to run on :32000. Head to http://ip:32000

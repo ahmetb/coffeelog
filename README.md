@@ -46,8 +46,10 @@ issue](https://github.com/ahmetb/coffeelog/issues/new).
 
 **Local development** (if you are interested in developing this app further)
 
-1. [Running services outside containers](docs/run-directly.md)
+1. [Running services directly outside containers](docs/run-directly.md)
 1. [Running locally on Minikube](docs/run-minikube.md)
+1. [Running locally on Minikube with Skaffold](docs/run-skaffold.md) (RECOMMENDED)
+
 
 -----
 

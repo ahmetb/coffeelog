@@ -1,0 +1,76 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: web-deployment
+spec:
+  revisionHistoryLimit: 5
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 100%
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      volumes:
+      - name: oauth-secrets
+        secret:
+          secretName: oauth2
+          items:
+          - key: client-secret.json
+            path: client-secret.json
+      - name: google-cloud-secrets
+        secret:
+          secretName: google-service-account
+          items:
+          - key: app_default_credentials.json
+            path: app-credentials.json
+      containers:
+      - name: web
+        image: gcr.io/ahmetb-starter/web:latest
+        imagePullPolicy: IfNotPresent # minikube-only
+        args:
+        - "-addr=:8000"
+        - "-google-project-id=$(GOOGLE_PROJECT_ID)"
+        - "-google-oauth2-config=/etc/secrets/oauth/client-secret.json"
+        - "-user-directory-addr=$(USER_SVC_ADDR)"
+        - "-coffee-directory-addr=$(COFFEE_SVC_ADDR)"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: GOOGLE_PROJECT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: google
+              key: project.id
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /etc/secrets/google/app-credentials.json
+        - name: USER_SVC_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: hosts
+              key: userdirectory
+        - name: COFFEE_SVC_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: hosts
+              key: coffeedirectory
+        volumeMounts:
+        - name: oauth-secrets
+          mountPath: /etc/secrets/oauth
+          readOnly: true
+        - name: google-cloud-secrets
+          mountPath: /etc/secrets/google
+          readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        livenessProbe:
+          initialDelaySeconds: 10
+          tcpSocket:
+            port: 8000
