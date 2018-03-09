@@ -1,3 +1,6 @@
+> :warning: TODO(ahmetb) This document is not accurate since I recently
+> switched to using Skaffold for pushing/deploying stuff.
+
 # Set up continuous build
 
 Deploying this application is as simple as deploying all the manifests under
