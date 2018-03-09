@@ -3,15 +3,15 @@ kind: Config
 build:
   tagPolicy: gitCommit
   artifacts:
-  - imageName: gcr.io/ahmetb-starter/web
+  - imageName: gcr.io/ahmetb-starter/userdirectory
     workspace: .
-    dockerfilePath: Dockerfile.web
+    dockerfilePath: Dockerfile.userdirectory
   local: {}
 deploy:
   kubectl:
     manifests:
     - paths:
       - ./misc/kube/common/**
-      - ./misc/kube/web/**
+      - ./misc/kube/userdirectory/**
       parameters:
-        WEB_IMAGE_REF: gcr.io/ahmetb-starter/web
+        USERDIRECTORY_IMAGE_REF: gcr.io/ahmetb-starter/userdirectory

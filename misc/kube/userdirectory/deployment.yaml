@@ -3,12 +3,7 @@ kind: Deployment
 metadata:
   name: userdirectory-deployment
 spec:
-  revisionHistoryLimit: 5
-  replicas: 3
-  strategy:
-    rollingUpdate:
-      maxUnavailable: 50%
-      maxSurge: 100%
+  replicas: 2
   template:
     metadata:
       labels:
@@ -23,7 +18,7 @@ spec:
             path: app-credentials.json
       containers:
       - name: userdirectory
-        image: gcr.io/ahmetb-starter/userdirectory:latest
+        image: USERDIRECTORY_IMAGE_REF
         args:
         - "-addr=:8001"
         - "-google-project-id=$(GOOGLE_PROJECT_ID)"

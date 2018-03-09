@@ -1,0 +1,17 @@
+apiVersion: skaffold/v1
+kind: Config
+build:
+  tagPolicy: gitCommit
+  artifacts:
+  - imageName: gcr.io/ahmetb-starter/coffeedirectory
+    workspace: .
+    dockerfilePath: Dockerfile.coffeedirectory
+  local: {}
+deploy:
+  kubectl:
+    manifests:
+    - paths:
+      - ./misc/kube/common/**
+      - ./misc/kube/coffeedirectory/**
+      parameters:
+        COFFEEDIRECTORY_IMAGE_REF: gcr.io/ahmetb-starter/coffeedirectory
