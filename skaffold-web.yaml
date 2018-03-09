@@ -1,7 +1,7 @@
 apiVersion: skaffold/v1
 kind: Config
 build:
-  tagPolicy: gitCommit
+  tagPolicy: sha256
   artifacts:
   - imageName: gcr.io/ahmetb-starter/web
     workspace: .

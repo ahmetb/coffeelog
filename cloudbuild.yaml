@@ -1,16 +1,21 @@
 # This yaml file is used by Google Cloud Container Builder to build the
 # microservices in parallel and push them to Google Container Registry.
+
 steps:
-- name: gcr.io/cloud-builders/docker
-  args: ['build', '-f=Dockerfile.web',
-          '-t=gcr.io/$PROJECT_ID/web:${REVISION_ID}', '.']
-- name: gcr.io/cloud-builders/docker
-  args: ['build', '-f=Dockerfile.userdirectory',
-          '-t=gcr.io/$PROJECT_ID/userdirectory:${REVISION_ID}', '.']
-- name: gcr.io/cloud-builders/docker
-  args: ['build', '-f=Dockerfile.coffeedirectory',
-          '-t=gcr.io/$PROJECT_ID/coffeedirectory:${REVISION_ID}', '.']
-images:
-  - 'gcr.io/$PROJECT_ID/web:${REVISION_ID}'
-  - 'gcr.io/$PROJECT_ID/userdirectory:${REVISION_ID}'
-  - 'gcr.io/$PROJECT_ID/coffeedirectory:${REVISION_ID}'
+- name: gcr.io/ahmetb-public/skaffold
+  args: ['run', '-f=skaffold-coffeedirectory.yaml', '-v=warning']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=coffee'
+
+- name: gcr.io/ahmetb-public/skaffold
+  args: ['run', '-f=skaffold-userdirectory.yaml', '-v=warning']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=coffee'
+
+- name: gcr.io/ahmetb-public/skaffold
+  args: ['run', '-f=skaffold-web.yaml', '-v=warning']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-a'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=coffee'
