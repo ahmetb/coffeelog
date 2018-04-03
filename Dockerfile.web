@@ -4,13 +4,13 @@ ARG REVISION_ID
 RUN go install -v \
       -tags netgo \
       -ldflags="-w -X github.com/ahmetb/coffeelog/version.version=$REVISION_ID" \
-      github.com/ahmetb/coffeelog/web
+      github.com/ahmetb/coffeelog/cmd/web
 
 FROM alpine
 RUN apk add --update ca-certificates && \
       rm -rf /var/cache/apk/* /tmp/*
 
 COPY  --from=0 /go/bin/web ./web
-COPY ./web/static ./static
+COPY ./cmd/web/static ./static
 ENTRYPOINT ["./web"]
 EXPOSE 8000

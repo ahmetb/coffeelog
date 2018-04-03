@@ -1,11 +1,12 @@
 # coffeelog
 
-Coffeelog is a multi-tier web application where coffee enthusiasts can log in
-with their Google accounts and share their coffee experiences with other people.
+Coffeelog is a multi-tier web application composed of microservices, where
+coffee enthusiasts can log in with their Google accounts and share their coffee
+experiences with other people.
 
 This is intended to be a sample cloud-native application to showcase the best
-practices in application deployment, products of [Google Cloud](https://cloud.google.com)
-and test new features.
+practices in application deployment, products of [Google
+Cloud Platform](https://cloud.google.com) and test new features/products.
 
 Coffeelog is written in [Go](https://golang.org), uses [gRPC](https://grpc.io)
 for communication between microservices. It runs on [Google

@@ -4,7 +4,7 @@ ARG REVISION_ID
 RUN go install -v \
       -tags netgo \
       -ldflags="-w -X github.com/ahmetb/coffeelog/version.version=$REVISION_ID" \
-      github.com/ahmetb/coffeelog/userdirectory
+      github.com/ahmetb/coffeelog/cmd/userdirectory
 
 FROM alpine
 RUN apk add --update ca-certificates && \
